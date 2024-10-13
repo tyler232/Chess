@@ -74,3 +74,4 @@ def display_message(message):
     screen.blit(text, text_rect)
     pygame.display.flip()
     pygame.time.wait(2000) 
+    
