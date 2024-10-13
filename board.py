@@ -66,4 +66,11 @@ def draw_pieces():
 
 def draw_in_check(king_loc):
     pygame.draw.rect(screen, RED, (king_loc[1] * SQUARE_SIZE, king_loc[0] * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
-    
+
+def display_message(message):
+    font = pygame.font.Font(None, 74)
+    text = font.render(message, True, (255, 0, 0))
+    text_rect = text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+    screen.blit(text, text_rect)
+    pygame.display.flip()
+    pygame.time.wait(2000) 

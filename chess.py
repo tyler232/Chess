@@ -23,6 +23,10 @@ while running:
 
     draw_pieces()
 
+    if in_checkmate(board, king_loc):
+        display_message("Checkmate!")
+        running = False
+
     pygame.display.flip()
 
     for event in pygame.event.get():
