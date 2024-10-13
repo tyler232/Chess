@@ -48,3 +48,4 @@ while running:
                 selected_piece = (row, col)
                 possible_moves = get_possible_moves(board, selected_piece)
                 print("Selected piece:", selected_piece)
+
