@@ -1,6 +1,10 @@
-# Implement later: en passant
+last_move = None
+en_passant_location = None
 
 def move_piece(board, possible_moves, selected_piece, end_pos):
+    global last_move
+    global en_passant_location
+
     start_row, start_col = selected_piece
     end_row, end_col = end_pos
 
@@ -11,32 +15,52 @@ def move_piece(board, possible_moves, selected_piece, end_pos):
         board[end_row][end_col] = piece
         board[7][7] = ""
         board[7][5] = "wr"
+        last_move = (piece, selected_piece, end_pos)
     elif piece == "wk" and is_valid_move(possible_moves, end_pos) and can_castle(board, selected_piece, end_pos) == 2:
         board[start_row][start_col] = ""
         board[end_row][end_col] = piece
         board[7][0] = ""
         board[7][3] = "wr"
+        last_move = (piece, selected_piece, end_pos)
     elif piece == "bk" and is_valid_move(possible_moves, end_pos) and can_castle(board, selected_piece, end_pos) == 1:
         board[start_row][start_col] = ""
         board[end_row][end_col] = piece
         board[0][7] = ""
         board[0][5] = "br"
+        last_move = (piece, selected_piece, end_pos)
     elif piece == "bk" and is_valid_move(possible_moves, end_pos) and can_castle(board, selected_piece, end_pos) == 2:
         board[start_row][start_col] = ""
         board[end_row][end_col] = piece
         board[0][0] = ""
         board[0][3] = "br"
+        last_move = (piece, selected_piece, end_pos)
     # Queening
     elif is_valid_move(possible_moves, end_pos) and piece == "wp" and end_row == 0:
         board[start_row][start_col] = ""
         board[end_row][end_col] = "wq"
+        last_move = (piece, selected_piece, end_pos)
     elif is_valid_move(possible_moves, end_pos) and piece == "bp" and end_row == 7:
         board[start_row][start_col] = ""
         board[end_row][end_col] = "bq"
+        last_move = (piece, selected_piece, end_pos)
+    # En passant
+    elif is_valid_move(possible_moves, end_pos) and en_passant_location and end_pos == en_passant_location:
+        print("Doing En passant")
+        board[start_row][start_col] = ""
+        board[end_row][end_col] = piece
+        if piece == "wp":
+            board[end_row + 1][end_col] = ""
+        elif piece == "bp":
+            board[end_row - 1][end_col] = ""
+
+        last_move = (piece, selected_piece, end_pos)
     # Regular move
     elif is_valid_move(possible_moves, end_pos):
         board[start_row][start_col] = ""
         board[end_row][end_col] = piece
+        last_move = (piece, selected_piece, end_pos)
+    en_passant_location = None
+    
 
 # 0: can't castle, 1: can castle kingside, 2: can castle queenside
 def can_castle(board, start_pos, end_pos):
@@ -84,6 +108,7 @@ def get_possible_moves(board, selected_piece):
     return []
 
 def possible_moves_pawn(board, start_pos, color):
+    global en_passant_location
     x, y = start_pos
     possible = []
     print(x, y, color)
@@ -107,6 +132,16 @@ def possible_moves_pawn(board, start_pos, color):
     if 0 <= x + direction < 8 and y < 7 and board[x + direction][y + 1] != "" and board[x + direction][y + 1][0] == opponent_color:
         possible.append((x + direction, y + 1))
     
+    # En passant
+    if last_move:
+        last_moved_piece = last_move[0]
+        last_moved_start = last_move[1]
+        last_moved_end = last_move[2]
+
+        if last_moved_piece[0] == opponent_color and last_moved_piece[1] == "p":
+            if abs(last_moved_start[0] - last_moved_end[0]) == 2 and abs(last_moved_end[1] - y) == 1:
+                possible.append((x + direction, last_moved_end[1]))
+                en_passant_location = (x + direction, last_moved_end[1])
     return possible
 
 def possible_moves_knight(board, start_pos, color):
