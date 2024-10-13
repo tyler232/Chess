@@ -11,6 +11,7 @@ BLACK = (0, 0, 0)
 BROWN = (139, 69, 19)
 LIGHT_BROWN = (245, 222, 179)
 GREEN = (0, 255, 0)
+RED = (255, 0, 0)
 
 PIECES = {
     "wp": pygame.image.load("assets/wp.png"),  # white pawn
@@ -62,3 +63,7 @@ def draw_pieces():
             piece = board[row][col]
             if piece != "":
                 screen.blit(PIECES[piece], (col * SQUARE_SIZE, row * SQUARE_SIZE))
+
+def draw_in_check(king_loc):
+    pygame.draw.rect(screen, RED, (king_loc[1] * SQUARE_SIZE, king_loc[0] * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+    

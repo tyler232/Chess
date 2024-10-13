@@ -1,3 +1,5 @@
+import copy
+
 current_player = "w"
 last_move = None
 en_passant_location = None
@@ -12,69 +14,107 @@ def move_piece(board, possible_moves, selected_piece, end_pos):
 
     piece = board[start_row][start_col]
 
+    # Wrong Turn
     if piece != "" and current_player != piece[0]:
         print("Not your turn")
         en_passant_location = None
         return
 
     # Castling
-    if piece == "wk" and is_valid_move(possible_moves, end_pos) and can_castle(board, selected_piece, end_pos) == 1:
-        board[start_row][start_col] = ""
-        board[end_row][end_col] = piece
-        board[7][7] = ""
-        board[7][5] = "wr"
-        last_move = (piece, selected_piece, end_pos)
-        current_player = "w" if current_player == "b" else "b"
-    elif piece == "wk" and is_valid_move(possible_moves, end_pos) and can_castle(board, selected_piece, end_pos) == 2:
-        board[start_row][start_col] = ""
-        board[end_row][end_col] = piece
-        board[7][0] = ""
-        board[7][3] = "wr"
-        last_move = (piece, selected_piece, end_pos)
-        current_player = "w" if current_player == "b" else "b"
-    elif piece == "bk" and is_valid_move(possible_moves, end_pos) and can_castle(board, selected_piece, end_pos) == 1:
-        board[start_row][start_col] = ""
-        board[end_row][end_col] = piece
-        board[0][7] = ""
-        board[0][5] = "br"
-        last_move = (piece, selected_piece, end_pos)
-        current_player = "w" if current_player == "b" else "b"
-    elif piece == "bk" and is_valid_move(possible_moves, end_pos) and can_castle(board, selected_piece, end_pos) == 2:
-        board[start_row][start_col] = ""
-        board[end_row][end_col] = piece
-        board[0][0] = ""
-        board[0][3] = "br"
-        last_move = (piece, selected_piece, end_pos)
-        current_player = "w" if current_player == "b" else "b"
+    copy_board = copy.deepcopy(board)
+    if piece == "wk" and is_valid_move(board, possible_moves, end_pos) and can_castle(board, selected_piece, end_pos) == 1:
+        copy_board[start_row][start_col] = ""
+        copy_board[end_row][end_col] = piece
+        copy_board[7][7] = ""
+        copy_board[7][5] = "wr"
+        if not in_check(copy_board, find_king(copy_board)):
+            board[start_row][start_col] = ""
+            board[end_row][end_col] = piece
+            board[7][7] = ""
+            board[7][5] = "wr"
+            last_move = (piece, selected_piece, end_pos)
+            current_player = "w" if current_player == "b" else "b"
+    elif piece == "wk" and is_valid_move(board, possible_moves, end_pos) and can_castle(board, selected_piece, end_pos) == 2:
+        copy_board[start_row][start_col] = ""
+        copy_board[end_row][end_col] = piece
+        copy_board[7][0] = ""
+        copy_board[7][3] = "wr"
+        if not in_check(copy_board, find_king(copy_board)):
+            board[start_row][start_col] = ""
+            board[end_row][end_col] = piece
+            board[7][0] = ""
+            board[7][3] = "wr"
+            last_move = (piece, selected_piece, end_pos)
+            current_player = "w" if current_player == "b" else "b"
+    elif piece == "bk" and is_valid_move(board, possible_moves, end_pos) and can_castle(board, selected_piece, end_pos) == 1:
+        copy_board[start_row][start_col] = ""
+        copy_board[end_row][end_col] = piece
+        copy_board[0][7] = ""
+        copy_board[0][5] = "br"
+        if not in_check(copy_board, find_king(copy_board)):
+            board[start_row][start_col] = ""
+            board[end_row][end_col] = piece
+            board[0][7] = ""
+            board[0][5] = "br"
+            last_move = (piece, selected_piece, end_pos)
+            current_player = "w" if current_player == "b" else "b"
+    elif piece == "bk" and is_valid_move(board, possible_moves, end_pos) and can_castle(board, selected_piece, end_pos) == 2:
+        copy_board[start_row][start_col] = ""
+        copy_board[end_row][end_col] = piece
+        copy_board[0][0] = ""
+        copy_board[0][3] = "br"
+        if not in_check(copy_board, find_king(copy_board)):
+            board[start_row][start_col] = ""
+            board[end_row][end_col] = piece
+            board[0][0] = ""
+            board[0][3] = "br"
+            last_move = (piece, selected_piece, end_pos)
+            current_player = "w" if current_player == "b" else "b"
     # Queening
-    elif is_valid_move(possible_moves, end_pos) and piece == "wp" and end_row == 0:
-        board[start_row][start_col] = ""
-        board[end_row][end_col] = "wq"
-        last_move = (piece, selected_piece, end_pos)
-        current_player = "w" if current_player == "b" else "b"
-    elif is_valid_move(possible_moves, end_pos) and piece == "bp" and end_row == 7:
-        board[start_row][start_col] = ""
-        board[end_row][end_col] = "bq"
-        last_move = (piece, selected_piece, end_pos)
-        current_player = "w" if current_player == "b" else "b"
+    elif is_valid_move(board, possible_moves, end_pos) and piece == "wp" and end_row == 0:
+        copy_board[start_row][start_col] = ""
+        copy_board[end_row][end_col] = "wq"
+        if not in_check(copy_board, find_king(copy_board)):
+            board[start_row][start_col] = ""
+            board[end_row][end_col] = "wq"
+            last_move = (piece, selected_piece, end_pos)
+            current_player = "w" if current_player == "b" else "b"
+    elif is_valid_move(board, possible_moves, end_pos) and piece == "bp" and end_row == 7:
+        copy_board[start_row][start_col] = ""
+        copy_board[end_row][end_col] = "bq"
+        if not in_check(copy_board, find_king(copy_board, current_player)):
+            board[start_row][start_col] = ""
+            board[end_row][end_col] = "bq"
+            last_move = (piece, selected_piece, end_pos)
+            current_player = "w" if current_player == "b" else "b"
     # En passant
-    elif is_valid_move(possible_moves, end_pos) and en_passant_location and end_pos == en_passant_location:
+    elif is_valid_move(board, possible_moves, end_pos) and en_passant_location and end_pos == en_passant_location:
         print("Doing En passant")
-        board[start_row][start_col] = ""
-        board[end_row][end_col] = piece
+        copy_board[start_row][start_col] = ""
+        copy_board[end_row][end_col] = piece
         if piece == "wp":
-            board[end_row + 1][end_col] = ""
+            copy_board[end_row + 1][end_col] = ""
         elif piece == "bp":
-            board[end_row - 1][end_col] = ""
+            copy_board[end_row - 1][end_col] = ""
 
-        last_move = (piece, selected_piece, end_pos)
-        current_player = "w" if current_player == "b" else "b"
+        if not in_check(copy_board, find_king(copy_board)):
+            board[start_row][start_col] = ""
+            board[end_row][end_col] = piece
+            if piece == "wp":
+                board[end_row + 1][end_col] = ""
+            elif piece == "bp":
+                board[end_row - 1][end_col] = ""
+            last_move = (piece, selected_piece, end_pos)
+            current_player = "w" if current_player == "b" else "b"
     # Regular move
-    elif is_valid_move(possible_moves, end_pos):
-        board[start_row][start_col] = ""
-        board[end_row][end_col] = piece
-        last_move = (piece, selected_piece, end_pos)
-        current_player = "w" if current_player == "b" else "b"
+    elif is_valid_move(board, possible_moves, end_pos):
+        copy_board[start_row][start_col] = ""
+        copy_board[end_row][end_col] = piece
+        if not in_check(copy_board, find_king(copy_board)):
+            board[start_row][start_col] = ""
+            board[end_row][end_col] = piece
+            last_move = (piece, selected_piece, end_pos)
+            current_player = "w" if current_player == "b" else "b"
     
     print("Last Move: ", last_move)
 
@@ -103,14 +143,11 @@ def can_castle(board, start_pos, end_pos):
         
     return 0
 
-def is_valid_move(possible_moves, end_pos):
+def is_valid_move(board, possible_moves, end_pos):
     return end_pos in possible_moves
 
-def get_possible_moves(board, selected_piece):
+def get_possible_moves_all_players(board, selected_piece):
     piece = board[selected_piece[0]][selected_piece[1]]
-    if not piece or piece[0] != current_player:
-        return []
-
     if piece[1] == "p":
         return possible_moves_pawn(board, selected_piece, piece[0])
     elif piece[1] == "n":
@@ -123,9 +160,16 @@ def get_possible_moves(board, selected_piece):
         return possible_moves_bishop(board, selected_piece, piece[0]) + possible_moves_rook(board, selected_piece, piece[0])
     elif piece[1] == "k":
         return possible_moves_king(board, selected_piece, piece[0])
+    return []
     
 
-    return []
+def get_possible_moves(board, selected_piece):
+    piece = board[selected_piece[0]][selected_piece[1]]
+    if not piece or piece[0] != current_player:
+        return []
+
+    return get_possible_moves_all_players(board, selected_piece)
+
 
 def possible_moves_pawn(board, start_pos, color):
     global en_passant_location
@@ -359,3 +403,23 @@ def possible_moves_king(board, selected_piece, color):
         possible.append((0, 2))
 
     return possible
+
+
+def find_king(board):
+    for row_idx in range(len(board)):
+        for col_idx in range(len(board[row_idx])):
+            if board[row_idx][col_idx] == f"{current_player}k":
+                return (row_idx, col_idx)
+    return None
+
+def in_check(board, king_location):
+    for row_idx in range(len(board)):
+        for col_idx in range(len(board[row_idx])):
+            piece = board[row_idx][col_idx]
+            if piece != "" and piece[0] != current_player:
+                possible_moves = get_possible_moves_all_players(board, (row_idx, col_idx))
+                if king_location in possible_moves:
+                    return True
+    return False
+
+
