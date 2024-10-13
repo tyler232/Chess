@@ -26,6 +26,9 @@ while running:
     if in_checkmate(board, king_loc):
         display_message("Checkmate!")
         running = False
+    elif in_stalemate(board, king_loc):
+        display_message("Stalemate")
+        running = False
 
     pygame.display.flip()
 
