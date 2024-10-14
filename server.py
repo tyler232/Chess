@@ -54,7 +54,7 @@ def main():
     random.shuffle(clients)
     for i, client in enumerate(clients):
         color = "WHITE" if i == 0 else "BLACK"
-        client.sendall(pickle.dumps(color))
+        client.sendall(color.encode('utf-8')) 
     
     # Keep the server running
     try:
