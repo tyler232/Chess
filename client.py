@@ -82,20 +82,21 @@ def main():
             enemy_king_in_check = False
 
         if selected_piece:
-            draw_select_piece(selected_piece, "WHITE")
-            # draw_select_piece(selected_piece, color)
+            # draw_select_piece(selected_piece, "WHITE")
+            draw_select_piece(selected_piece, color)
         if possible_moves:
-            draw_possible_moves(possible_moves, "WHITE")
-            # draw_possible_moves(possible_moves, color)
+            # draw_possible_moves(possible_moves, "WHITE")
+            draw_possible_moves(possible_moves, color)
         if checking:
-            draw_in_check(king_loc, "WHITE")
-            # draw_in_check(king_loc, color)
+            # draw_in_check(king_loc, "WHITE")
+            draw_in_check(king_loc, color)
         elif enemy_king_in_check:
-            draw_in_check(enemy_king_loc, "WHITE")  # Always draw if the enemy king is in check
+            # draw_in_check(enemy_king_loc, "WHITE")  # Always draw if the enemy king is in check
+            draw_in_check(enemy_king_loc, color)
 
 
-        draw_pieces("WHITE", board)
-        # draw_pieces(color)
+        # draw_pieces("WHITE", board)
+        draw_pieces(color, board)
 
         if in_checkmate(board, king_loc):
             print("Displaying Checkmate message (send end)!")
@@ -124,10 +125,10 @@ def main():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
                 row, col = pos[1] // SQUARE_SIZE, pos[0] // SQUARE_SIZE
-                # if color == "WHITE":
-                #     row, col = pos[1] // SQUARE_SIZE, pos[0] // SQUARE_SIZE
-                # elif color == "BLACK":
-                #     row, col = (ROWS - 1 - pos[1] // SQUARE_SIZE), pos[0] // SQUARE_SIZE
+                if color == "WHITE":
+                    row, col = pos[1] // SQUARE_SIZE, pos[0] // SQUARE_SIZE
+                elif color == "BLACK":
+                    row, col = (ROWS - 1 - pos[1] // SQUARE_SIZE), pos[0] // SQUARE_SIZE
                 if selected_piece:
                     sucess = move_piece(board, possible_moves, selected_piece, (row, col))
                     if sucess:
@@ -157,6 +158,7 @@ def main():
                 board = move["board"]
                 print("NEW BOARD:", board)
                 draw_pieces("WHITE", board)
+                draw_pieces(color, board)
                 update_lastmove((move["piece"], move["from"], move["to"]))
                 turn = True
             
