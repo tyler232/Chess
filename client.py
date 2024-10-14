@@ -22,6 +22,19 @@ pygame.init()
 screen = pygame.display.set_mode((800, 800))
 pygame.display.set_caption("Multiplayer Chess")
 
+def get_server_info():
+    global SERVER_IP, SERVER_PORT, SERVER_ADDRESS
+
+    ip_input = input(f"Enter server IP (default: {SERVER_IP}): ") or SERVER_IP
+    port_input = input(f"Enter server port (default: {SERVER_PORT}): ") or str(SERVER_PORT)
+
+    SERVER_IP = ip_input
+    SERVER_PORT = int(port_input)
+    SERVER_ADDRESS = (SERVER_IP, SERVER_PORT)
+
+    print(f"Connecting to server at {SERVER_IP}:{SERVER_PORT}...")
+
+
 def send_move(move, sock):
     sock.sendall(pickle.dumps(move))
 
@@ -54,6 +67,10 @@ def main():
         ["wr", "wn", "wb", "wq", "wk", "wb", "wn", "wr"]
     ]
     global running, selected_piece, possible_moves, color, turn
+
+    # get the server IP and port from the user
+    get_server_info()
+
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect(SERVER_ADDRESS)
 

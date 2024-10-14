@@ -220,11 +220,7 @@ def possible_moves_pawn(board, start_pos, color):
         last_moved_end = last_move[2]
 
         if last_moved_piece[0] == opponent_color and last_moved_piece[1] == "p":
-            # print("ENPASSANT: Last move: ", last_move)
-            # print("ENPASSANT: ", (x, y))
             if abs(last_moved_start[0] - last_moved_end[0]) == 2 and abs(last_moved_end[1] - y) == 1 and last_moved_end[0] == x:
-                print("ENPASSANT: Last move: ", last_move)
-                print("ENPASSANT: ", (x, y))
                 possible.append((x + direction, last_moved_end[1]))
                 en_passant_location = (x + direction, last_moved_end[1])
     return possible
@@ -475,7 +471,7 @@ def in_checkmate(board, king_location):
                     copy_board[row_idx][col_idx] = ""
                     copy_board[move[0]][move[1]] = piece
                     if not in_check(copy_board, find_king(copy_board)):
-                        print("Move: ", (row_idx, col_idx), move)
+                        # print("Move: ", (row_idx, col_idx), move)
                         return False
     return True
 
