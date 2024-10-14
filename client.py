@@ -3,8 +3,8 @@ import sys
 import socket
 import pickle
 import threading
-from movement import *
-from board import *
+from source.movement import *
+from source.board import *
 
 SERVER_IP = "localhost"
 SERVER_PORT = 9060
