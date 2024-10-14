@@ -9,19 +9,21 @@ running = True
 possible_moves = []
 
 while running:
+    set_test_mode(True)
+    
     draw_board()
     king_loc = find_king(board)
     checking = in_check(board, king_loc)
 
     if selected_piece:
-        draw_select_piece(selected_piece)
+        draw_select_piece(selected_piece, "WHITE")
     if possible_moves:
-        draw_possible_moves(possible_moves)
+        draw_possible_moves(possible_moves, "WHITE")
     if checking:
-        draw_in_check(king_loc)
+        draw_in_check(king_loc, "WHITE")
     
 
-    draw_pieces()
+    draw_pieces("WHITE")
 
     if in_checkmate(board, king_loc):
         display_message("Checkmate!")

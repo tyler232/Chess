@@ -14,6 +14,8 @@ selected_piece = None
 running = True
 possible_moves = []
 move_queue = []
+color = None
+turn = None
 
 # Initialize Pygame
 pygame.init()
@@ -33,10 +35,34 @@ def receive_moves(sock):
         print("Received move from opponent:", move)
         move_queue.append(move)  # Add received move to the queue
 
+def receive_color(sock):
+    global color
+    data = sock.recv(4096)
+    color = pickle.loads(data)
+    display_message("You are " + color)
+
 def main():
-    global running, selected_piece, possible_moves
+    board = [
+        ["br", "bn", "bb", "bq", "bk", "bb", "bn", "br"],
+        ["bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"],
+        ["", "", "", "", "", "", "", ""],
+        ["", "", "", "", "", "", "", ""],
+        ["", "", "", "", "", "", "", ""],
+        ["", "", "", "", "", "", "", ""],
+        ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
+        ["wr", "wn", "wb", "wq", "wk", "wb", "wn", "wr"]
+    ]
+    global running, selected_piece, possible_moves, color, turn
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect(SERVER_ADDRESS)
+
+    # Receive the color from the server
+    receive_color(sock)
+
+    set_current_player(color)
+
+    if color == "WHITE":
+        turn = True
 
     # Start a thread to receive moves from the server
     threading.Thread(target=receive_moves, args=(sock,), daemon=True).start()
@@ -47,13 +73,17 @@ def main():
         checking = in_check(board, king_loc)
 
         if selected_piece:
-            draw_select_piece(selected_piece)
+            draw_select_piece(selected_piece, "WHITE")
+            # draw_select_piece(selected_piece, color)
         if possible_moves:
-            draw_possible_moves(possible_moves)
+            draw_possible_moves(possible_moves, "WHITE")
+            # draw_possible_moves(possible_moves, color)
         if checking:
-            draw_in_check(king_loc)
+            draw_in_check(king_loc, "WHITE")
+            # draw_in_check(king_loc, color)
 
-        draw_pieces()
+        draw_pieces("WHITE", board)
+        # draw_pieces(color)
 
         if in_checkmate(board, king_loc):
             display_message("Checkmate!")
@@ -74,6 +104,10 @@ def main():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
                 row, col = pos[1] // SQUARE_SIZE, pos[0] // SQUARE_SIZE
+                # if color == "WHITE":
+                #     row, col = pos[1] // SQUARE_SIZE, pos[0] // SQUARE_SIZE
+                # elif color == "BLACK":
+                #     row, col = (ROWS - 1 - pos[1] // SQUARE_SIZE), pos[0] // SQUARE_SIZE
                 if selected_piece:
                     sucess = move_piece(board, possible_moves, selected_piece, (row, col))
                     if sucess:
@@ -81,25 +115,31 @@ def main():
                         print("Send Moved piece:", piece)
                         move = {"piece": piece, 
                                 "from": selected_piece, 
-                                "to": (row, col)}
+                                "to": (row, col),
+                                "possible_moves": possible_moves,
+                                "board": board}
                         send_move(move, sock)
+                        turn = False
                     selected_piece = None
                     possible_moves = []
+                    
                 else:
-                    selected_piece = (row, col)
-                    possible_moves = get_possible_moves(board, selected_piece)
-                    print("Selected piece:", selected_piece)
+                    piece = board[row][col]
+                    print("Selecting piece at:", (row, col))
+                    if turn and piece and ((piece[0] == "w" and color == "WHITE") or (piece[0] == "b" and color == "BLACK")):
+                        selected_piece = (row, col)
+                        possible_moves = get_possible_moves(board, selected_piece)
 
         # Check if there are any moves in the queue from the server
         while move_queue:
             move = move_queue.pop(0)  # Get the first move from the queue
             if move and move != "checkmate" and move != "stalemate":
-                piece = move["piece"]
-                from_pos = move["from"]
-                to_pos = move["to"]
-                board[to_pos[0]][to_pos[1]] = piece
-                board[from_pos[0]][from_pos[1]] = ""
-                swap_players()
+                board = move["board"]
+                print("NEW BOARD:", board)
+                draw_pieces("WHITE", board)
+                update_lastmove((move["piece"], move["from"], move["to"]))
+                turn = True
+
 
 if __name__ == "__main__":
     main()

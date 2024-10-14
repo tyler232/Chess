@@ -3,6 +3,7 @@ import copy
 current_player = "w"
 last_move = None
 en_passant_location = None
+test_mode = False
 
 def move_piece(board, possible_moves, selected_piece, end_pos):
     global last_move
@@ -15,7 +16,7 @@ def move_piece(board, possible_moves, selected_piece, end_pos):
     piece = board[start_row][start_col]
 
     # Wrong Turn
-    if piece != "" and current_player != piece[0]:
+    if test_mode and piece != "" and current_player != piece[0]:
         print("Not your turn")
         en_passant_location = None
         return False
@@ -34,7 +35,8 @@ def move_piece(board, possible_moves, selected_piece, end_pos):
             board[7][7] = ""
             board[7][5] = "wr"
             last_move = (piece, selected_piece, end_pos)
-            current_player = "w" if current_player == "b" else "b"
+            if test_mode:
+                swap_players()
             sucess = True
     elif piece == "wk" and is_valid_move(board, possible_moves, end_pos) and can_castle(board, selected_piece, end_pos) == 2:
         copy_board[start_row][start_col] = ""
@@ -47,7 +49,8 @@ def move_piece(board, possible_moves, selected_piece, end_pos):
             board[7][0] = ""
             board[7][3] = "wr"
             last_move = (piece, selected_piece, end_pos)
-            current_player = "w" if current_player == "b" else "b"
+            if test_mode:
+                swap_players()
             sucess = True
     elif piece == "bk" and is_valid_move(board, possible_moves, end_pos) and can_castle(board, selected_piece, end_pos) == 1:
         copy_board[start_row][start_col] = ""
@@ -60,7 +63,8 @@ def move_piece(board, possible_moves, selected_piece, end_pos):
             board[0][7] = ""
             board[0][5] = "br"
             last_move = (piece, selected_piece, end_pos)
-            current_player = "w" if current_player == "b" else "b"
+            if test_mode:
+                swap_players()
             sucess = True
     elif piece == "bk" and is_valid_move(board, possible_moves, end_pos) and can_castle(board, selected_piece, end_pos) == 2:
         copy_board[start_row][start_col] = ""
@@ -73,7 +77,8 @@ def move_piece(board, possible_moves, selected_piece, end_pos):
             board[0][0] = ""
             board[0][3] = "br"
             last_move = (piece, selected_piece, end_pos)
-            current_player = "w" if current_player == "b" else "b"
+            if test_mode:
+                swap_players()
             sucess = True
     # Queening
     elif is_valid_move(board, possible_moves, end_pos) and piece == "wp" and end_row == 0:
@@ -83,16 +88,18 @@ def move_piece(board, possible_moves, selected_piece, end_pos):
             board[start_row][start_col] = ""
             board[end_row][end_col] = "wq"
             last_move = (piece, selected_piece, end_pos)
-            current_player = "w" if current_player == "b" else "b"
+            if test_mode:
+                swap_players()
             sucess = True
     elif is_valid_move(board, possible_moves, end_pos) and piece == "bp" and end_row == 7:
         copy_board[start_row][start_col] = ""
         copy_board[end_row][end_col] = "bq"
-        if not in_check(copy_board, find_king(copy_board, current_player)):
+        if not in_check(copy_board, find_king(copy_board)):
             board[start_row][start_col] = ""
             board[end_row][end_col] = "bq"
             last_move = (piece, selected_piece, end_pos)
-            current_player = "w" if current_player == "b" else "b"
+            if test_mode:
+                swap_players()
             sucess = True
     # En passant
     elif is_valid_move(board, possible_moves, end_pos) and en_passant_location and end_pos == en_passant_location:
@@ -112,7 +119,8 @@ def move_piece(board, possible_moves, selected_piece, end_pos):
             elif piece == "bp":
                 board[end_row - 1][end_col] = ""
             last_move = (piece, selected_piece, end_pos)
-            current_player = "w" if current_player == "b" else "b"
+            if test_mode:
+                swap_players()
             sucess = True
     # Regular move
     elif is_valid_move(board, possible_moves, end_pos):
@@ -122,7 +130,8 @@ def move_piece(board, possible_moves, selected_piece, end_pos):
             board[start_row][start_col] = ""
             board[end_row][end_col] = piece
             last_move = (piece, selected_piece, end_pos)
-            current_player = "w" if current_player == "b" else "b"
+            if test_mode:
+                swap_players()
             sucess = True
     
     print("Last Move: ", last_move)
@@ -211,8 +220,11 @@ def possible_moves_pawn(board, start_pos, color):
         last_moved_end = last_move[2]
 
         if last_moved_piece[0] == opponent_color and last_moved_piece[1] == "p":
+            # print("ENPASSANT: Last move: ", last_move)
+            # print("ENPASSANT: ", (x, y))
             if abs(last_moved_start[0] - last_moved_end[0]) == 2 and abs(last_moved_end[1] - y) == 1 and last_moved_end[0] == x:
-                # print("Last move: ", last_move)
+                print("ENPASSANT: Last move: ", last_move)
+                print("ENPASSANT: ", (x, y))
                 possible.append((x + direction, last_moved_end[1]))
                 en_passant_location = (x + direction, last_moved_end[1])
     return possible
@@ -466,6 +478,21 @@ def in_stalemate(board, king_location):
                     if not in_check(copy_board, find_king(copy_board)):
                         return False
     return True
+
+def set_test_mode(test):
+    global test_mode
+    test_mode = test
+
+def set_current_player(player):
+    global current_player
+    if player == "WHITE":
+        current_player = "w"
+    elif player == "BLACK":
+        current_player = "b"
+
+def update_lastmove(move):
+    global last_move
+    last_move = move
 
 def swap_players():
     global current_player

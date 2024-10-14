@@ -1,6 +1,7 @@
 import socket
 import pickle
 import threading
+import random
 
 SERVER_IP = "localhost"
 SERVER_PORT = 9060
@@ -49,6 +50,11 @@ def main():
         threading.Thread(target=handle_client, args=(conn, addr), daemon=True).start()
 
     print("Both clients connected. Starting the game...")
+    
+    random.shuffle(clients)
+    for i, client in enumerate(clients):
+        color = "WHITE" if i == 0 else "BLACK"
+        client.sendall(pickle.dumps(color))
     
     # Keep the server running
     try:

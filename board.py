@@ -40,32 +40,44 @@ def draw_board():
             color = LIGHT_BROWN if (row + col) % 2 == 0 else BROWN
             pygame.draw.rect(screen, color, (col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
 
-def draw_select_piece(selected_piece):
-    pygame.draw.rect(screen, GREEN, (selected_piece[1] * SQUARE_SIZE, selected_piece[0] * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+def draw_select_piece(selected_piece, player_color):
+    if player_color == "BLACK":
+        row = ROWS - 1 - selected_piece[0]  # Reverse the row for Black
+        col = selected_piece[1]
+    else:
+        row, col = selected_piece
 
-def draw_possible_moves(possible_moves):
+    pygame.draw.rect(screen, GREEN, (col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+
+def draw_possible_moves(possible_moves, player_color):
     for move in possible_moves:
-        pygame.draw.rect(screen, GREEN, (move[1] * SQUARE_SIZE, move[0] * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
-board = [
-    ["br", "bn", "bb", "bq", "bk", "bb", "bn", "br"],
-    ["bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"],
-    ["", "", "", "", "", "", "", ""],
-    ["", "", "", "", "", "", "", ""],
-    ["", "", "", "", "", "", "", ""],
-    ["", "", "", "", "", "", "", ""],
-    ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
-    ["wr", "wn", "wb", "wq", "wk", "wb", "wn", "wr"]
-]
+        if player_color == "BLACK":
+            row = ROWS - 1 - move[0]  # Reverse the row for Black
+            col = move[1]
+        else:
+            row, col = move
+        pygame.draw.rect(screen, GREEN, (col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
 
-def draw_pieces():
+
+
+def draw_pieces(player_color, board):
     for row in range(ROWS):
         for col in range(COLS):
             piece = board[row][col]
             if piece != "":
-                screen.blit(PIECES[piece], (col * SQUARE_SIZE, row * SQUARE_SIZE))
+                if player_color == "WHITE":
+                    screen.blit(PIECES[piece], (col * SQUARE_SIZE, row * SQUARE_SIZE))
+                elif player_color == "BLACK":
+                    screen.blit(PIECES[piece], (col * SQUARE_SIZE, (ROWS - 1 - row) * SQUARE_SIZE))
 
-def draw_in_check(king_loc):
-    pygame.draw.rect(screen, RED, (king_loc[1] * SQUARE_SIZE, king_loc[0] * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+def draw_in_check(king_loc, player_color):
+    if player_color == "BLACK":
+        row = ROWS - 1 - king_loc[0]
+        col = king_loc[1]
+    else:
+        row, col = king_loc
+
+    pygame.draw.rect(screen, RED, (col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
 
 def display_message(message):
     font = pygame.font.Font(None, 74)
