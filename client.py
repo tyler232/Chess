@@ -38,7 +38,8 @@ def receive_moves(sock):
 def receive_color(sock):
     global color
     data = sock.recv(4096)
-    color = pickle.loads(data)
+    color = data.decode('utf-8').replace('\x00', '').strip()
+    print(f"Received color from server: {color} (length: {len(color)})")
     display_message("You are " + color)
 
 def main():
