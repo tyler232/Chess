@@ -26,7 +26,7 @@ def send_move(move, sock):
     sock.sendall(pickle.dumps(move))
 
 def receive_moves(sock):
-    global move_queue
+    global move_queue, running
     while True:
         data = sock.recv(4096)
         if not data:
@@ -67,10 +67,19 @@ def main():
     # Start a thread to receive moves from the server
     threading.Thread(target=receive_moves, args=(sock,), daemon=True).start()
 
+    enemy_king_in_check = False
+
     while running:
         draw_board()
         king_loc = find_king(board)
         checking = in_check(board, king_loc)
+        enemy_king_loc = find_enemy_king(board)
+        enemy_in_check_status = enemy_in_check(board, enemy_king_loc)
+        
+        if enemy_in_check_status:
+            enemy_king_in_check = True
+        else:
+            enemy_king_in_check = False
 
         if selected_piece:
             draw_select_piece(selected_piece, "WHITE")
@@ -81,17 +90,22 @@ def main():
         if checking:
             draw_in_check(king_loc, "WHITE")
             # draw_in_check(king_loc, color)
+        elif enemy_king_in_check:
+            draw_in_check(enemy_king_loc, "WHITE")  # Always draw if the enemy king is in check
+
 
         draw_pieces("WHITE", board)
         # draw_pieces(color)
 
         if in_checkmate(board, king_loc):
-            display_message("Checkmate!")
-            running = False
+            print("Displaying Checkmate message (send end)!")
+            display_message("YOU LOST")
+            # running = False
             send_move("checkmate", sock)
         elif in_stalemate(board, king_loc):
+            print("Displaying Stalemate message (send end)!")
             display_message("Stalemate")
-            running = False
+            # running = False
             send_move("stalemate", sock)
 
         pygame.display.flip()
@@ -139,6 +153,17 @@ def main():
                 draw_pieces("WHITE", board)
                 update_lastmove((move["piece"], move["from"], move["to"]))
                 turn = True
+            elif move and move == "checkmate":
+                print("Displaying checkmate message (received end)!")
+                display_message("Checkmate, YOU WIN!")
+                # running = False
+                break
+            elif move and move == "stalemate":
+                print("Displaying stalemate message (received end)!")
+                display_message("Stalemate")
+                # running = False
+                break
+            
 
 
 if __name__ == "__main__":

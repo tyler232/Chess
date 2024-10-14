@@ -433,6 +433,13 @@ def find_king(board):
                 return (row_idx, col_idx)
     return None
 
+def find_enemy_king(board):
+    for row_idx in range(len(board)):
+        for col_idx in range(len(board[row_idx])):
+            if board[row_idx][col_idx] == f"{'b' if current_player == 'w' else 'w'}k":
+                return (row_idx, col_idx)
+    return None
+
 def in_check(board, king_location):
     for row_idx in range(len(board)):
         for col_idx in range(len(board[row_idx])):
@@ -440,6 +447,16 @@ def in_check(board, king_location):
             if piece != "" and piece[0] != current_player:
                 possible_moves = get_possible_moves_all_players(board, (row_idx, col_idx))
                 if king_location in possible_moves:
+                    return True
+    return False
+
+def enemy_in_check(board, enemy_king_location):
+    for row_idx in range(len(board)):
+        for col_idx in range(len(board[row_idx])):
+            piece = board[row_idx][col_idx]
+            if piece != "" and piece[0] == current_player:
+                possible_moves = get_possible_moves_all_players(board, (row_idx, col_idx))
+                if enemy_king_location in possible_moves:
                     return True
     return False
 
