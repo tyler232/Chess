@@ -479,6 +479,26 @@ def in_checkmate(board, king_location):
                         return False
     return True
 
+def enemy_in_checkmate(board, enemy_king_location):
+    if not enemy_in_check(board, enemy_king_location):
+        return False
+    
+    for row_idx in range(len(board)):
+        for col_idx in range(len(board[row_idx])):
+            piece = board[row_idx][col_idx]
+            if piece != "" and piece[0] != current_player:
+                possible_moves = get_possible_moves_all_players(board, (row_idx, col_idx))
+                for move in possible_moves:
+                    copy_board = copy.deepcopy(board)
+                    copy_board[row_idx][col_idx] = ""
+                    copy_board[move[0]][move[1]] = piece
+                    if not enemy_in_check(copy_board, find_enemy_king(copy_board)):
+                        return False
+
+    return True
+    
+
+
 def in_stalemate(board, king_location):
     if in_check(board, king_location):
         return False
@@ -494,6 +514,24 @@ def in_stalemate(board, king_location):
                     copy_board[move[0]][move[1]] = piece
                     if not in_check(copy_board, find_king(copy_board)):
                         return False
+    return True
+
+def enemy_in_stalemate(board, enemy_king_location):
+    if enemy_in_check(board, enemy_king_location):
+        return False
+    
+    for row_idx in range(len(board)):
+        for col_idx in range(len(board[row_idx])):
+            piece = board[row_idx][col_idx]
+            if piece != "" and piece[0] != current_player:
+                possible_moves = get_possible_moves_all_players(board, (row_idx, col_idx))
+                for move in possible_moves:
+                    copy_board = copy.deepcopy(board)
+                    copy_board[row_idx][col_idx] = ""
+                    copy_board[move[0]][move[1]] = piece
+                    if not enemy_in_check(copy_board, find_enemy_king(copy_board)):
+                        return False
+
     return True
 
 def set_test_mode(test):

@@ -101,12 +101,18 @@ def main():
             print("Displaying Checkmate message (send end)!")
             display_message("YOU LOST")
             # running = False
-            send_move("checkmate", sock)
         elif in_stalemate(board, king_loc):
             print("Displaying Stalemate message (send end)!")
             display_message("Stalemate")
             # running = False
-            send_move("stalemate", sock)
+        elif enemy_in_checkmate(board, enemy_king_loc):
+            print("Displaying Checkmate message (send end)!")
+            display_message("YOU WIN")
+            # running = False
+        elif enemy_in_stalemate(board, enemy_king_loc):
+            print("Displaying Stalemate message (send end)!")
+            display_message("Stalemate")
+            # running = False
 
         pygame.display.flip()
 
@@ -147,22 +153,13 @@ def main():
         # Check if there are any moves in the queue from the server
         while move_queue:
             move = move_queue.pop(0)  # Get the first move from the queue
-            if move and move != "checkmate" and move != "stalemate":
+            if move:
                 board = move["board"]
                 print("NEW BOARD:", board)
                 draw_pieces("WHITE", board)
                 update_lastmove((move["piece"], move["from"], move["to"]))
                 turn = True
-            elif move and move == "checkmate":
-                print("Displaying checkmate message (received end)!")
-                display_message("Checkmate, YOU WIN!")
-                # running = False
-                break
-            elif move and move == "stalemate":
-                print("Displaying stalemate message (received end)!")
-                display_message("Stalemate")
-                # running = False
-                break
+            
             
 
 
