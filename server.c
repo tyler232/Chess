@@ -6,7 +6,7 @@
 #include <arpa/inet.h>
 #include <time.h>
 
-#define SERVER_IP "127.0.0.1"  // Changed to explicit loopback address
+#define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 9060
 #define MAX_CLIENTS 2
 #define BUFFER_SIZE 4096
@@ -77,7 +77,7 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
-    // Listen for incoming connections
+    // listen for incoming connections
     if (listen(server, MAX_CLIENTS) < 0) {
         perror("Listen failed");
         close(server);
@@ -88,10 +88,10 @@ int main() {
 
     // Accept clients
     while (client_count < MAX_CLIENTS) {
-        int *conn = malloc(sizeof(int));  // Allocate memory for each connection
+        int *conn = (int *)malloc(sizeof(int));
         if ((*conn = accept(server, NULL, NULL)) < 0) {
             perror("Accept failed");
-            free(conn);  // Free the allocated memory if accept fails
+            free(conn);
             continue;
         }
 
