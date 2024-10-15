@@ -5,16 +5,33 @@
 #include <pthread.h>
 #include <arpa/inet.h>
 #include <time.h>
+#include <errno.h>
 
 #define DEFAULT_SERVER_IP "127.0.0.1"
 #define DEFAULT_SERVER_PORT 9060
 #define MAX_CLIENTS 2
 #define BUFFER_SIZE 4096
+#define RECONNECT_TIMEOUT 60
 
 char* server_ip = DEFAULT_SERVER_IP;
 int server_port = DEFAULT_SERVER_PORT;
 
-int clients[MAX_CLIENTS];
+typedef struct {
+    int conn;
+    char ip[INET_ADDRSTRLEN];
+    int port;
+    char *id;
+    char color[8];
+    time_t last_active;
+} Client;
+
+typedef struct {
+    ssize_t size;
+    char *data;
+} BackupStorage;
+
+Client clients[MAX_CLIENTS];
+BackupStorage *progress = NULL;
 int client_count = 0;
 pthread_mutex_t client_lock;
 
@@ -37,40 +54,142 @@ void parse_args(int argc, char *argv[]) {
     }
 }
 
+ssize_t read_until_nl(int socket, char *buffer, size_t count) {
+    size_t total_bytes_read = 0;
+	size_t bytes_read;
+
+    if (count <= 0 || buffer == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    while (1) {
+		char curr_char;
+        bytes_read = read(socket, &curr_char, 1);
+
+        if (bytes_read < 0) {
+            if (errno == EINTR) {
+				continue;
+			} else {
+				return -1;
+			}
+        } else if (bytes_read == 0) {
+            if (total_bytes_read == 0) return 0;
+			return total_bytes_read;
+		}
+
+        if (total_bytes_read < count - 1) {
+            total_bytes_read++;
+            *buffer++ = curr_char;
+        }
+
+        if (curr_char == '\n') break;
+    }
+
+    return total_bytes_read;
+}
+
+int find_client_by_id(const char *id) {
+    for (int i = 0; i < client_count; i++) {
+        if (strcmp(clients[i].id, id) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 void *handle_client(void *arg) {
     int conn = *(int *)arg;
     free(arg);  // Free the dynamically allocated memory after extracting conn
     struct sockaddr_in addr;
     socklen_t addr_len = sizeof(addr);
     getpeername(conn, (struct sockaddr *)&addr, &addr_len);
-    printf("Connected to %s:%d\n", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
+    char *client_ip = inet_ntoa(addr.sin_addr);
+    int client_port = ntohs(addr.sin_port);
+
+    char id[BUFFER_SIZE];
+    read_until_nl(conn, id, sizeof(id));    // read the client id
+    id[strlen(id) - 1] = '\0';  // remove the newline character
+    printf("Connected to %s:%d, id: %s\n", client_ip, client_port, id);
+
+    // Check if the client is connected before
+    pthread_mutex_lock(&client_lock);
+    int client_index = find_client_by_id(id);
+    if (client_index == -1) {  // New connection
+        client_index = client_count++;
+        strcpy(clients[client_index].ip, client_ip);
+        clients[client_index].port = client_port;
+        clients[client_index].conn = conn;
+        clients[client_index].id = strdup(id);
+
+        // Assign color immediately after the client connects
+        const char *color;
+        if (client_index == 0) {
+            color = (rand() % 2 == 0) ? "WHITE" : "BLACK";
+        } else if (client_index == 1) {
+            color = (strcmp(clients[0].color, "WHITE") == 0) ? "BLACK" : "WHITE";
+        }
+
+        strcpy(clients[client_index].color, color);
+
+        // Send the assigned color to the client
+        printf("Assigning and sending color to client %s: %s\n", id, color);
+        send(conn, color, strlen(color) + 1, 0);
+    } else { // Reconnection
+        clients[client_index].conn = conn;
+        strcpy(clients[client_index].ip, client_ip);
+        clients[client_index].port = client_port;
+        clients[client_index].conn = conn;
+        printf("Client %s: reconnected.\n", id);
+        
+        // Resend the color on reconnection
+        const char *color = clients[client_index].color;
+        send(conn, color, strlen(color) + 1, 0);
+
+        // Resend the progress to restore the game
+        if (progress != NULL) {
+            send(conn, progress->data, progress->size, 0);
+        }
+    }
+
+    clients[client_index].last_active = time(NULL);
+    pthread_mutex_unlock(&client_lock);
 
     while (1) {
         char buffer[BUFFER_SIZE];
         ssize_t bytes_received = recv(conn, buffer, sizeof(buffer), 0);
         if (bytes_received <= 0) {
+            printf("Client %s disconnected.\n", id);
             break;
         }
 
-        printf("Move received from %s:%d\n", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
+        if (progress->data != NULL) {
+            free(progress->data);
+        }
+        progress->size = bytes_received;
+        progress->data = (char *)malloc(progress->size);
+        memcpy(progress->data, buffer, progress->size);
+
+        pthread_mutex_lock(&client_lock);
+        clients[client_index].last_active = time(NULL);
+        pthread_mutex_unlock(&client_lock);
+
+        printf("Move received from %s\n", id);
+        printf("Forwarding the move to the other client...\n");
 
         pthread_mutex_lock(&client_lock);
         for (int i = 0; i < client_count; i++) {
-            if (clients[i] != conn) {
-                send(clients[i], buffer, bytes_received, 0);
+            if (clients[i].conn != conn) {
+                send(clients[i].conn, progress->data, progress->size, 0);
             }
         }
         pthread_mutex_unlock(&client_lock);
     }
 
-    printf("Disconnected from %s:%d\n", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
+    // Client disconnected, reserve the spot and allow reconnection
+    printf("Disconnected from %s\n", id);
     pthread_mutex_lock(&client_lock);
-    for (int i = 0; i < client_count; i++) {
-        if (clients[i] == conn) {
-            clients[i] = clients[--client_count];
-            break;
-        }
-    }
+    clients[client_index].conn = -1;
     pthread_mutex_unlock(&client_lock);
     close(conn);
     return NULL;
@@ -79,6 +198,8 @@ void *handle_client(void *arg) {
 int main(int argc, char *argv[]) {
     parse_args(argc, argv);
 
+    srand(time(NULL));
+    progress = (BackupStorage *)malloc(sizeof(BackupStorage));
     pthread_mutex_init(&client_lock, NULL);
 
     // Create the server socket
@@ -119,11 +240,6 @@ int main(int argc, char *argv[]) {
             continue;
         }
 
-        // Add client to the list
-        pthread_mutex_lock(&client_lock);
-        clients[client_count++] = *conn;
-        pthread_mutex_unlock(&client_lock);
-
         pthread_t thread;
         pthread_create(&thread, NULL, handle_client, conn);  // Pass the connection pointer
         pthread_detach(thread);
@@ -131,23 +247,32 @@ int main(int argc, char *argv[]) {
 
     printf("Both clients connected. Starting the game...\n");
 
-    // Assign colors to clients
-    srand(time(NULL));
-    for (int i = 0; i < client_count; i++) {
-        const char *color = (i == 0) ? "WHITE" : "BLACK";
-        send(clients[i], color, strlen(color) + 1, 0);
-    }
-    printf("Colors assigned to clients\n");
-
     // Keep the server running
     while (1) {
-        pause();
+        sleep(1);
+        time_t current_time = time(NULL);
+
+        // check if disconnected clients is timed out
+        pthread_mutex_lock(&client_lock);
+        for (int i = 0; i < client_count; i++) {
+            if (clients[i].conn == -1 && difftime(current_time, clients[i].last_active) > RECONNECT_TIMEOUT) {
+                printf("Client %s did not reconnect in time. Removing from the game.\n", clients[i].id);
+                free(clients[i].id);
+                clients[i] = clients[--client_count];
+            }
+        }
+
+        pthread_mutex_unlock(&client_lock);
     }
 
     // Clean up when shutting down
     for (int i = 0; i < client_count; i++) {
-        close(clients[i]);
+        if (clients[i].id != NULL) {
+            free(clients[i].id);
+        }
+        close(clients[i].conn);
     }
+    free(progress);
     close(server);
     pthread_mutex_destroy(&client_lock);
 

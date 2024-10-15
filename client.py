@@ -9,6 +9,7 @@ from source.board import *
 SERVER_IP = "localhost"
 SERVER_PORT = 9060
 SERVER_ADDRESS = (SERVER_IP, SERVER_PORT)
+PLAYER_ID = None
 
 selected_piece = None
 running = True
@@ -23,14 +24,16 @@ screen = pygame.display.set_mode((800, 800))
 pygame.display.set_caption("Multiplayer Chess")
 
 def get_server_info():
-    global SERVER_IP, SERVER_PORT, SERVER_ADDRESS
+    global SERVER_IP, SERVER_PORT, SERVER_ADDRESS, PLAYER_ID
 
     ip_input = input(f"Enter server IP (default: {SERVER_IP}): ") or SERVER_IP
     port_input = input(f"Enter server port (default: {SERVER_PORT}): ") or str(SERVER_PORT)
+    id_input = input("Enter your player ID: ")
 
     SERVER_IP = ip_input
     SERVER_PORT = int(port_input)
     SERVER_ADDRESS = (SERVER_IP, SERVER_PORT)
+    PLAYER_ID = id_input
 
     print(f"Connecting to server at {SERVER_IP}:{SERVER_PORT}...")
 
@@ -74,6 +77,10 @@ def main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect(SERVER_ADDRESS)
 
+    # Send the player ID to the server
+    id_header = str(PLAYER_ID + "\n")
+    sock.sendall(id_header.encode('utf-8'))
+    
     # Receive the color from the server
     receive_color(sock)
 
