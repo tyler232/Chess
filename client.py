@@ -1,6 +1,7 @@
 import pygame
 import sys
 import socket
+import errno
 import pickle
 import threading
 from source.movement import *
@@ -22,6 +23,19 @@ turn = None
 pygame.init()
 screen = pygame.display.set_mode((800, 800))
 pygame.display.set_caption("Multiplayer Chess")
+
+def read_until_nl(sock):
+    buffer = ""
+    recv_bit = 0
+    while True:
+        recv_bit += 1
+        curr_char = sock.recv(1)
+        if curr_char == b'\n':
+            break
+        buffer += curr_char.decode('utf-8')
+
+    print(f"{recv_bit} bits received")
+    return buffer
 
 def get_server_info():
     global SERVER_IP, SERVER_PORT, SERVER_ADDRESS, PLAYER_ID
@@ -53,10 +67,8 @@ def receive_moves(sock):
 
 def receive_color(sock):
     global color
-    data = sock.recv(4096)
-    color = data.decode('utf-8').replace('\x00', '').strip()
+    color = read_until_nl(sock)
     print(f"Received color from server: {color} (length: {len(color)})")
-    display_message("You are " + color)
 
 def main():
     board = [
@@ -72,6 +84,7 @@ def main():
     global running, selected_piece, possible_moves, color, turn
 
     # get the server IP and port from the user
+    display_message("Connecting to server...")
     get_server_info()
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -81,8 +94,24 @@ def main():
     id_header = str(PLAYER_ID + "\n")
     sock.sendall(id_header.encode('utf-8'))
     
+    # Recieve connection status
+    connection_status = read_until_nl(sock)
+    print("Connection status:", connection_status)
+    if connection_status == "WAIT":
+        screen.fill((0, 0, 0))
+        display_message("Waiting for another player to connect...")
+    connection_status = read_until_nl(sock)
+    print("Connection status:", connection_status)
+    if connection_status == "STRT":
+        screen.fill((0, 0, 0))
+        display_message("Game Starts!")
+    elif connection_status == "RSRT":
+        screen.fill((0, 0, 0))
+        display_message("Game Resumes!")
     # Receive the color from the server
     receive_color(sock)
+    screen.fill((0, 0, 0))
+    display_message("You are " + color)
 
     set_current_player(color)
 
@@ -93,7 +122,7 @@ def main():
     threading.Thread(target=receive_moves, args=(sock,), daemon=True).start()
 
     enemy_king_in_check = False
-
+    
     while running:
         draw_board()
         king_loc = find_king(board)

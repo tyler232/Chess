@@ -12,6 +12,11 @@
 #define MAX_CLIENTS 2
 #define BUFFER_SIZE 4096
 #define RECONNECT_TIMEOUT 60
+#define WAITING_OPPONENT_SIGNAL "WAIT\n"
+#define NO_WAITING_OPPONENT_SIGNAL "NOWA\n"
+#define START_GAME_SIGNAL "STRT\n"
+#define RECONNECT_SIGNAL "RECN\n"
+#define RESTART_SIGNAL "RSTR\n"
 
 char* server_ip = DEFAULT_SERVER_IP;
 int server_port = DEFAULT_SERVER_PORT;
@@ -54,6 +59,7 @@ void parse_args(int argc, char *argv[]) {
     }
 }
 
+// Read from client until newline character
 ssize_t read_until_nl(int socket, char *buffer, size_t count) {
     size_t total_bytes_read = 0;
 	size_t bytes_read;
@@ -122,29 +128,44 @@ void *handle_client(void *arg) {
         clients[client_index].conn = conn;
         clients[client_index].id = strdup(id);
 
-        // Assign color immediately after the client connects
-        const char *color;
-        if (client_index == 0) {
-            color = (rand() % 2 == 0) ? "WHITE" : "BLACK";
-        } else if (client_index == 1) {
-            color = (strcmp(clients[0].color, "WHITE") == 0) ? "BLACK" : "WHITE";
+        // Notify the client if there is another client waiting
+        if (client_count == 1) send(conn, WAITING_OPPONENT_SIGNAL, 5, 0);
+        else if (client_count == 2) {
+            // or start the game if there are two clients connected
+            send(clients[1].conn, NO_WAITING_OPPONENT_SIGNAL, 5, 0);
+            send(clients[0].conn, START_GAME_SIGNAL, 5, 0);
+            send(clients[1].conn, START_GAME_SIGNAL, 5, 0);
+
+            const char *color[2];
+            if (rand() % 2 == 0) {
+                color[0] = "WHITE\n";
+                color[1] = "BLACK\n";
+            } else {
+                color[0] = "BLACK\n";
+                color[1] = "WHITE\n";
+            }
+            // Send the assigned color to the client
+            printf("Assigning and sending color to clients\n");
+            printf("Clients %s: %s\n", clients[0].id, color[0]);
+            printf("Clients %s: %s\n", clients[1].id, color[1]);
+            send(clients[0].conn, color[0], strlen(color[0]), 0);
+            send(clients[1].conn, color[1], strlen(color[1]), 0);
+
+            strcpy(clients[0].color, color[0]);
+            strcpy(clients[1].color, color[1]);
         }
-
-        strcpy(clients[client_index].color, color);
-
-        // Send the assigned color to the client
-        printf("Assigning and sending color to client %s: %s\n", id, color);
-        send(conn, color, strlen(color) + 1, 0);
     } else { // Reconnection
         clients[client_index].conn = conn;
         strcpy(clients[client_index].ip, client_ip);
         clients[client_index].port = client_port;
         clients[client_index].conn = conn;
         printf("Client %s: reconnected.\n", id);
-        
+        // Notify the client that it is reconnected
+        send(conn, RECONNECT_SIGNAL, 5, 0);
+        send(conn, RESTART_SIGNAL, 5, 0);
         // Resend the color on reconnection
         const char *color = clients[client_index].color;
-        send(conn, color, strlen(color) + 1, 0);
+        send(conn, color, strlen(color), 0);
 
         // Resend the progress to restore the game
         if (progress != NULL) {
@@ -163,6 +184,7 @@ void *handle_client(void *arg) {
             break;
         }
 
+        // Store the progress for backup
         if (progress->data != NULL) {
             free(progress->data);
         }
@@ -170,10 +192,11 @@ void *handle_client(void *arg) {
         progress->data = (char *)malloc(progress->size);
         memcpy(progress->data, buffer, progress->size);
 
+        // reset last active time of client
         pthread_mutex_lock(&client_lock);
         clients[client_index].last_active = time(NULL);
         pthread_mutex_unlock(&client_lock);
-
+        
         printf("Move received from %s\n", id);
         printf("Forwarding the move to the other client...\n");
 
