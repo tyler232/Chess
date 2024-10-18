@@ -100,6 +100,11 @@ def main():
     if connection_status == "WAIT":
         screen.fill((0, 0, 0))
         display_message("Waiting for another player to connect...")
+    elif connection_status == "FULL":
+        screen.fill((0, 0, 0))
+        display_message("Game is full")
+        running = False
+        return
     connection_status = read_until_nl(sock)
     print("Connection status:", connection_status)
     if connection_status == "STRT":

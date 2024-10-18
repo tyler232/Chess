@@ -17,6 +17,8 @@
 #define START_GAME_SIGNAL "STRT\n"
 #define RECONNECT_SIGNAL "RECN\n"
 #define RESTART_SIGNAL "RSTR\n"
+#define ROOM_FULL_SIGNAL "FULL\n"
+#define MAX_CONNECTION_ATTEMPTS 512
 
 char* server_ip = DEFAULT_SERVER_IP;
 int server_port = DEFAULT_SERVER_PORT;
@@ -38,6 +40,7 @@ typedef struct {
 Client clients[MAX_CLIENTS];
 BackupStorage *progress = NULL;
 int client_count = 0;
+int connection_attempts = 0;    // stress protection
 pthread_mutex_t client_lock;
 
 void parse_args(int argc, char *argv[]) {
@@ -104,7 +107,17 @@ int find_client_by_id(const char *id) {
     return -1;
 }
 
+void* handle_full_client(void *arg) {
+    printf("Reached handle_full_client\n");
+    int conn = *(int *)arg;
+    free(arg);
+    send(conn, ROOM_FULL_SIGNAL, 5, 0);
+    close(conn);
+    return NULL;
+}
+
 void *handle_client(void *arg) {
+    printf("Reached handle_client\n");
     int conn = *(int *)arg;
     free(arg);  // Free the dynamically allocated memory after extracting conn
     struct sockaddr_in addr;
@@ -153,6 +166,12 @@ void *handle_client(void *arg) {
 
             strcpy(clients[0].color, color[0]);
             strcpy(clients[1].color, color[1]);
+        } else if (client_count > 2) {
+            printf("Client %s: rejected. Game is full.\n", id);
+            send(conn, ROOM_FULL_SIGNAL, 5, 0);
+            close(conn);
+            client_count = 2;
+            return NULL;
         }
     } else { // Reconnection
         clients[client_index].conn = conn;
@@ -255,7 +274,8 @@ int main(int argc, char *argv[]) {
     printf("Server started. Waiting for clients to connect on %s:%d...\n", server_ip, server_port);
 
     // Accept clients
-    while (client_count < MAX_CLIENTS) {
+    while (1) {
+        connection_attempts++;
         int *conn = (int *)malloc(sizeof(int));
         if ((*conn = accept(server, NULL, NULL)) < 0) {
             perror("Accept failed");
@@ -264,8 +284,15 @@ int main(int argc, char *argv[]) {
         }
 
         pthread_t thread;
+        if (client_count == 2 && connection_attempts < MAX_CONNECTION_ATTEMPTS) {
+            pthread_create(&thread, NULL, handle_full_client, conn);
+            pthread_detach(thread);
+            connection_attempts--;
+            continue;
+        }
         pthread_create(&thread, NULL, handle_client, conn);  // Pass the connection pointer
         pthread_detach(thread);
+        connection_attempts--;
     }
 
     printf("Both clients connected. Starting the game...\n");
