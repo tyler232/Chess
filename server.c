@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include <time.h>
 #include <errno.h>
+#include <signal.h>
 
 #define DEFAULT_SERVER_IP "127.0.0.1"
 #define DEFAULT_SERVER_PORT 9060
@@ -37,11 +38,21 @@ typedef struct {
     char *data;
 } BackupStorage;
 
+int server_running = 1;
+int server_socket;
 Client clients[MAX_CLIENTS];
 BackupStorage *progress = NULL;
 int client_count = 0;
 int connection_attempts = 0;    // stress protection
 pthread_mutex_t client_lock;
+
+void cleanup();
+
+void signal_handler(int signum) {
+    server_running = 0;
+    cleanup();
+    exit(0);
+}
 
 void parse_args(int argc, char *argv[]) {
     if (argc > 1) {
@@ -105,6 +116,21 @@ int find_client_by_id(const char *id) {
         }
     }
     return -1;
+}
+
+void cleanup() {
+    for (int i = 0; i < client_count; i++) {
+        close(clients[i].conn);
+        free(clients[i].id);
+    }
+
+    if (progress != NULL) {
+        if (progress->data != NULL) free(progress->data);
+        free(progress);
+    }
+    pthread_mutex_destroy(&client_lock);
+    close(server_socket);
+    printf("Server cleaned up and shutting down.\n");
 }
 
 void* handle_full_client(void *arg) {
@@ -243,10 +269,11 @@ int main(int argc, char *argv[]) {
     srand(time(NULL));
     progress = (BackupStorage *)malloc(sizeof(BackupStorage));
     pthread_mutex_init(&client_lock, NULL);
+    signal(SIGINT, signal_handler);
 
     // Create the server socket
-    int server = socket(AF_INET, SOCK_STREAM, 0);
-    if (server < 0) {
+    int server_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_socket < 0) {
         perror("Socket creation failed");
         exit(EXIT_FAILURE);
     }
@@ -258,26 +285,26 @@ int main(int argc, char *argv[]) {
     server_addr.sin_port = htons(server_port);
 
     // Bind the socket to the server address and port
-    if (bind(server, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+    if (bind(server_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
         perror("Bind failed");
-        close(server);
+        close(server_socket);
         exit(EXIT_FAILURE);
     }
 
     // listen for incoming connections
-    if (listen(server, MAX_CLIENTS) < 0) {
+    if (listen(server_socket, MAX_CLIENTS) < 0) {
         perror("Listen failed");
-        close(server);
+        close(server_socket);
         exit(EXIT_FAILURE);
     }
 
     printf("Server started. Waiting for clients to connect on %s:%d...\n", server_ip, server_port);
 
     // Accept clients
-    while (1) {
+    while (server_running) {
         connection_attempts++;
         int *conn = (int *)malloc(sizeof(int));
-        if ((*conn = accept(server, NULL, NULL)) < 0) {
+        if ((*conn = accept(server_socket, NULL, NULL)) < 0) {
             perror("Accept failed");
             free(conn);
             continue;
@@ -298,7 +325,7 @@ int main(int argc, char *argv[]) {
     printf("Both clients connected. Starting the game...\n");
 
     // Keep the server running
-    while (1) {
+    while (server_running) {
         sleep(1);
         time_t current_time = time(NULL);
 
@@ -316,16 +343,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Clean up when shutting down
-    for (int i = 0; i < client_count; i++) {
-        if (clients[i].id != NULL) {
-            free(clients[i].id);
-        }
-        close(clients[i].conn);
-    }
-    free(progress);
-    close(server);
-    pthread_mutex_destroy(&client_lock);
-
+    cleanup();
     return 0;
 }
 
