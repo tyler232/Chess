@@ -2,6 +2,8 @@ import pygame
 import sys
 import socket
 import errno
+import random
+import string
 import pickle
 import threading
 from source.movement import *
@@ -42,7 +44,7 @@ def get_server_info():
 
     ip_input = input(f"Enter server IP (default: {SERVER_IP}): ") or SERVER_IP
     port_input = input(f"Enter server port (default: {SERVER_PORT}): ") or str(SERVER_PORT)
-    id_input = input("Enter your player ID: ")
+    id_input = input("Enter your player ID (default: RANDOM ): ") or ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10))
 
     SERVER_IP = ip_input
     SERVER_PORT = int(port_input)
