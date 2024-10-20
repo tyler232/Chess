@@ -2,9 +2,10 @@ import pygame
 
 pygame.init()
 
-WIDTH, HEIGHT = 800, 800
+BAR_HEIGHT = 50
+BOARD_WIDTH, BOARD_HEIGHT = 800, 800
 ROWS, COLS = 8, 8
-SQUARE_SIZE = WIDTH // COLS
+SQUARE_SIZE = BOARD_WIDTH // COLS
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -31,14 +32,23 @@ PIECES = {
 for piece in PIECES:
     PIECES[piece] = pygame.transform.scale(PIECES[piece], (SQUARE_SIZE, SQUARE_SIZE))
 
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption('Chess')
+screen = pygame.display.set_mode((BOARD_WIDTH, BOARD_HEIGHT + 2 * BAR_HEIGHT))
+
+def draw_top_bar(opponent_name):
+    font = pygame.font.Font(None, 36)
+    text = font.render(f"Opponent: {opponent_name}", True, WHITE)
+    screen.blit(text, (0, 0)) 
+
+def draw_bottom_bar(player_name):
+    font = pygame.font.Font(None, 36)
+    text = font.render(f"Player: {player_name}", True, WHITE)
+    screen.blit(text, (0, BOARD_HEIGHT + BAR_HEIGHT))
 
 def draw_board():
     for row in range(ROWS):
         for col in range(COLS):
             color = LIGHT_BROWN if (row + col) % 2 == 0 else BROWN
-            pygame.draw.rect(screen, color, (col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+            pygame.draw.rect(screen, color, (col * SQUARE_SIZE, BAR_HEIGHT + row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
 
 def draw_select_piece(selected_piece, player_color):
     if player_color == "BLACK":
@@ -47,7 +57,7 @@ def draw_select_piece(selected_piece, player_color):
     else:
         row, col = selected_piece
 
-    pygame.draw.rect(screen, GREEN, (col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+    pygame.draw.rect(screen, GREEN, (col * SQUARE_SIZE, row * SQUARE_SIZE + BAR_HEIGHT, SQUARE_SIZE, SQUARE_SIZE))
 
 def draw_possible_moves(possible_moves, player_color):
     for move in possible_moves:
@@ -56,7 +66,7 @@ def draw_possible_moves(possible_moves, player_color):
             col = move[1]
         else:
             row, col = move
-        pygame.draw.rect(screen, GREEN, (col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+        pygame.draw.rect(screen, GREEN, (col * SQUARE_SIZE, row * SQUARE_SIZE + BAR_HEIGHT, SQUARE_SIZE, SQUARE_SIZE))
 
 
 
@@ -66,9 +76,9 @@ def draw_pieces(player_color, board):
             piece = board[row][col]
             if piece != "":
                 if player_color == "WHITE":
-                    screen.blit(PIECES[piece], (col * SQUARE_SIZE, row * SQUARE_SIZE))
+                    screen.blit(PIECES[piece], (col * SQUARE_SIZE, row * SQUARE_SIZE + BAR_HEIGHT))
                 elif player_color == "BLACK":
-                    screen.blit(PIECES[piece], (col * SQUARE_SIZE, (ROWS - 1 - row) * SQUARE_SIZE))
+                    screen.blit(PIECES[piece], (col * SQUARE_SIZE, (ROWS - 1 - row) * SQUARE_SIZE + BAR_HEIGHT))
 
 def draw_in_check(king_loc, player_color):
     if player_color == "BLACK":
@@ -77,13 +87,13 @@ def draw_in_check(king_loc, player_color):
     else:
         row, col = king_loc
 
-    pygame.draw.rect(screen, RED, (col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+    pygame.draw.rect(screen, RED, (col * SQUARE_SIZE, row * SQUARE_SIZE + BAR_HEIGHT, SQUARE_SIZE, SQUARE_SIZE))
 
 def display_message(message):
     font = pygame.font.Font(None, 74)
     text = font.render(message, True, (255, 0, 0))
-    text_rect = text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+    text_rect = text.get_rect(center=(BOARD_WIDTH // 2, BOARD_HEIGHT // 2))
     screen.blit(text, text_rect)
     pygame.display.flip()
     pygame.time.wait(2000) 
-    
+

@@ -180,8 +180,17 @@ void *handle_client(void *arg) {
             send(clients[0].conn, color[0], strlen(color[0]), 0);
             send(clients[1].conn, color[1], strlen(color[1]), 0);
 
+            // Store the color for future reconnections
             strcpy(clients[0].color, color[0]);
             strcpy(clients[1].color, color[1]);
+
+            // send oppoenent's id
+            char client0_id_signal[BUFFER_SIZE];
+            char client1_id_signal[BUFFER_SIZE];
+            snprintf(client0_id_signal, sizeof(client0_id_signal), "%s\n", clients[0].id);
+            snprintf(client1_id_signal, sizeof(client1_id_signal), "%s\n", clients[1].id);
+            send(clients[0].conn, client1_id_signal, strlen(client1_id_signal), 0);
+            send(clients[1].conn, client0_id_signal, strlen(client0_id_signal), 0);
         } else if (client_count > 2) {
             printf("Client %s: rejected. Game is full.\n", id);
             send(conn, ROOM_FULL_SIGNAL, 5, 0);
@@ -198,9 +207,15 @@ void *handle_client(void *arg) {
         // Notify the client that it is reconnected
         send(conn, RECONNECT_SIGNAL, 5, 0);
         send(conn, RESTART_SIGNAL, 5, 0);
+
         // Resend the color on reconnection
         const char *color = clients[client_index].color;
         send(conn, color, strlen(color), 0);
+
+        // Resend the opponent's id
+        char opponent_id_signal[BUFFER_SIZE];
+        snprintf(opponent_id_signal, sizeof(opponent_id_signal), "%s\n", clients[1 - client_index].id);
+        send(conn, opponent_id_signal, strlen(opponent_id_signal), 0);
 
         // Resend the progress to restore the game
         if (progress != NULL) {

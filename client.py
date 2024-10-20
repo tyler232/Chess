@@ -23,7 +23,7 @@ turn = None
 
 # Initialize Pygame
 pygame.init()
-screen = pygame.display.set_mode((800, 800))
+screen = pygame.display.set_mode((BOARD_WIDTH, BOARD_HEIGHT + 2 * BAR_HEIGHT))
 pygame.display.set_caption("Multiplayer Chess")
 
 def read_until_nl(sock):
@@ -115,13 +115,17 @@ def main():
     elif connection_status == "RSRT":
         screen.fill((0, 0, 0))
         display_message("Game Resumes!")
+
     # Receive the color from the server
     receive_color(sock)
     screen.fill((0, 0, 0))
     display_message("You are " + color)
-
     set_current_player(color)
 
+    # Receive the opponent's name from the server
+    opponent_name = read_until_nl(sock)
+    player_name = PLAYER_ID
+    
     if color == "WHITE":
         turn = True
 
@@ -131,7 +135,10 @@ def main():
     enemy_king_in_check = False
     
     while running:
+        draw_top_bar(opponent_name)
         draw_board()
+        draw_bottom_bar(player_name)
+
         king_loc = find_king(board)
         checking = in_check(board, king_loc)
         enemy_king_loc = find_enemy_king(board)
@@ -185,11 +192,12 @@ def main():
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
-                row, col = pos[1] // SQUARE_SIZE, pos[0] // SQUARE_SIZE
-                if color == "WHITE":
-                    row, col = pos[1] // SQUARE_SIZE, pos[0] // SQUARE_SIZE
-                elif color == "BLACK":
-                    row, col = (ROWS - 1 - pos[1] // SQUARE_SIZE), pos[0] // SQUARE_SIZE
+                col = pos[0] // SQUARE_SIZE
+                row = (pos[1] - BAR_HEIGHT) // SQUARE_SIZE
+                if row < 0 or row >= ROWS:
+                    continue
+                if color == "BLACK":
+                    row = ROWS - 1 - row
                 if selected_piece:
                     sucess = move_piece(board, possible_moves, selected_piece, (row, col))
                     if sucess:
@@ -218,13 +226,10 @@ def main():
             if move:
                 board = move["board"]
                 print("NEW BOARD:", board)
-                draw_pieces("WHITE", board)
                 draw_pieces(color, board)
                 update_lastmove((move["piece"], move["from"], move["to"]))
                 turn = True
             
-            
-
 
 if __name__ == "__main__":
     main()
