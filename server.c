@@ -133,17 +133,7 @@ void cleanup() {
     printf("Server cleaned up and shutting down.\n");
 }
 
-void* handle_full_client(void *arg) {
-    printf("Reached handle_full_client\n");
-    int conn = *(int *)arg;
-    free(arg);
-    send(conn, ROOM_FULL_SIGNAL, 5, 0);
-    close(conn);
-    return NULL;
-}
-
 void *handle_client(void *arg) {
-    printf("Reached handle_client\n");
     int conn = *(int *)arg;
     free(arg);  // Free the dynamically allocated memory after extracting conn
     struct sockaddr_in addr;
@@ -196,8 +186,8 @@ void *handle_client(void *arg) {
             printf("Client %s: rejected. Game is full.\n", id);
             send(conn, ROOM_FULL_SIGNAL, 5, 0);
             close(conn);
+            free(clients[client_index].id);
             client_count = 2;
-            return NULL;
         }
     } else { // Reconnection
         clients[client_index].conn = conn;
@@ -311,14 +301,10 @@ int main(int argc, char *argv[]) {
         }
 
         pthread_t thread;
-        if (client_count == 2 && connection_attempts < MAX_CONNECTION_ATTEMPTS) {
-            pthread_create(&thread, NULL, handle_full_client, conn);
+        if (connection_attempts < MAX_CONNECTION_ATTEMPTS) {
+            pthread_create(&thread, NULL, handle_client, conn);  // Pass the connection pointer
             pthread_detach(thread);
-            connection_attempts--;
-            continue;
         }
-        pthread_create(&thread, NULL, handle_client, conn);  // Pass the connection pointer
-        pthread_detach(thread);
         connection_attempts--;
     }
 
