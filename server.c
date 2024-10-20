@@ -283,6 +283,14 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+    // Enable address reuse
+    int opt = 1;
+    if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+        perror("setsockopt failed");
+        close(server_socket);
+        exit(EXIT_FAILURE);
+    }
+
     // Setup the server address structure
     struct sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
