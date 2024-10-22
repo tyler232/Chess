@@ -252,6 +252,9 @@ void *handle_client(void *arg) {
         if (strncmp(buffer, RESTART_GAME_SIGNAL, 5) == 0) {
             printf("Restarting the game...\n");
             // TODO
+            for (int i = 0; i < client_count; i++) {
+                send(clients[i].conn, "\0", 1, 0);
+            }
         } else {
             printf("Move received from %s\n", id);
             printf("Forwarding the move to the other client...\n");
