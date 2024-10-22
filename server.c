@@ -20,6 +20,7 @@
 #define RESTART_SIGNAL "RSTR\n"
 #define ROOM_FULL_SIGNAL "FULL\n"
 #define MAX_CONNECTION_ATTEMPTS 512
+#define RESTART_GAME_SIGNAL "RSTG\n"
 
 char* server_ip = DEFAULT_SERVER_IP;
 int server_port = DEFAULT_SERVER_PORT;
@@ -233,7 +234,8 @@ void *handle_client(void *arg) {
             printf("Client %s disconnected.\n", id);
             break;
         }
-
+        printf("Received %ld bytes from %s\n", bytes_received, id);
+        printf("Data: %s\n", buffer);
         // Store the progress for backup
         if (progress->data != NULL) {
             free(progress->data);
@@ -247,16 +249,21 @@ void *handle_client(void *arg) {
         clients[client_index].last_active = time(NULL);
         pthread_mutex_unlock(&client_lock);
         
-        printf("Move received from %s\n", id);
-        printf("Forwarding the move to the other client...\n");
+        if (strncmp(buffer, RESTART_GAME_SIGNAL, 5) == 0) {
+            printf("Restarting the game...\n");
+            // TODO
+        } else {
+            printf("Move received from %s\n", id);
+            printf("Forwarding the move to the other client...\n");
 
-        pthread_mutex_lock(&client_lock);
-        for (int i = 0; i < client_count; i++) {
-            if (clients[i].conn != conn) {
-                send(clients[i].conn, progress->data, progress->size, 0);
+            pthread_mutex_lock(&client_lock);
+            for (int i = 0; i < client_count; i++) {
+                if (clients[i].conn != conn) {
+                    send(clients[i].conn, progress->data, progress->size, 0);
+                }
             }
+            pthread_mutex_unlock(&client_lock);
         }
-        pthread_mutex_unlock(&client_lock);
     }
 
     // Client disconnected, reserve the spot and allow reconnection

@@ -2,7 +2,7 @@ import pygame
 
 pygame.init()
 
-BAR_HEIGHT = 50
+BAR_HEIGHT = 75
 BOARD_WIDTH, BOARD_HEIGHT = 800, 800
 ROWS, COLS = 8, 8
 SQUARE_SIZE = BOARD_WIDTH // COLS
@@ -34,16 +34,26 @@ for piece in PIECES:
 
 screen = pygame.display.set_mode((BOARD_WIDTH, BOARD_HEIGHT + 2 * BAR_HEIGHT))
 
-def draw_top_bar(opponent_name):
+def draw_top_bar(opponent_name, score):
     font = pygame.font.Font(None, 36)
     text = font.render(f"Opponent: {opponent_name}", True, WHITE)
-    screen.blit(text, (0, 0)) 
+    screen.blit(text, (0, 0))
+    score_text = font.render(f"Score: {score}", True, WHITE)
+    screen.blit(score_text, (0, 36))
 
-def draw_bottom_bar(player_name):
+def delete_top_bar():
+    pygame.draw.rect(screen, BLACK, (0, 0, BOARD_WIDTH, BAR_HEIGHT))
+
+def draw_bottom_bar(player_name, score):
     font = pygame.font.Font(None, 36)
     text = font.render(f"Player: {player_name}", True, WHITE)
     screen.blit(text, (0, BOARD_HEIGHT + BAR_HEIGHT))
+    score_text = font.render(f"Score: {score}", True, WHITE)
+    screen.blit(score_text, (0, BOARD_HEIGHT + BAR_HEIGHT + 36))
 
+def delete_bottom_bar():
+    pygame.draw.rect(screen, BLACK, (0, BOARD_HEIGHT + BAR_HEIGHT, BOARD_WIDTH, BAR_HEIGHT))
+    
 def draw_board():
     for row in range(ROWS):
         for col in range(COLS):
@@ -96,4 +106,3 @@ def display_message(message):
     screen.blit(text, text_rect)
     pygame.display.flip()
     pygame.time.wait(2000) 
-

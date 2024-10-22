@@ -2,6 +2,7 @@ import pygame
 import sys
 import socket
 import errno
+import time
 import random
 import string
 import pickle
@@ -20,6 +21,8 @@ possible_moves = []
 move_queue = []
 color = None
 turn = None
+player_score = 0
+opponent_score = 0
 
 # Initialize Pygame
 pygame.init()
@@ -53,6 +56,8 @@ def get_server_info():
 
     print(f"Connecting to server at {SERVER_IP}:{SERVER_PORT}...")
 
+def send_restart_request(sock):
+    sock.sendall(b"RSTG\n")
 
 def send_move(move, sock):
     sock.sendall(pickle.dumps(move))
@@ -84,6 +89,7 @@ def main():
         ["wr", "wn", "wb", "wq", "wk", "wb", "wn", "wr"]
     ]
     global running, selected_piece, possible_moves, color, turn
+    global player_score, opponent_score
 
     # get the server IP and port from the user
     display_message("Connecting to server...")
@@ -135,9 +141,9 @@ def main():
     enemy_king_in_check = False
     
     while running:
-        draw_top_bar(opponent_name)
+        draw_top_bar(opponent_name, opponent_score)
         draw_board()
-        draw_bottom_bar(player_name)
+        draw_bottom_bar(player_name, player_score)
 
         king_loc = find_king(board)
         checking = in_check(board, king_loc)
@@ -169,19 +175,58 @@ def main():
         if in_checkmate(board, king_loc):
             print("Displaying Checkmate message (send end)!")
             display_message("YOU LOST")
-            # running = False
+            opponent_score += 1
+            print("Player score:", player_score)
+            print("Opponent score:", opponent_score)
+            delete_top_bar()
+            draw_top_bar(opponent_name, opponent_score)
+            pygame.display.flip()
+            send_restart_request(sock)
+            time.sleep(10)
+            running = False
         elif in_stalemate(board, king_loc):
             print("Displaying Stalemate message (send end)!")
             display_message("Stalemate")
-            # running = False
+            player_score += 1
+            opponent_score += 1
+            print("Player score:", player_score)
+            print("Opponent score:", opponent_score)
+            delete_top_bar()
+            delete_bottom_bar()
+            draw_top_bar(opponent_name, opponent_score)
+            draw_bottom_bar(player_name, player_score)
+            pygame.display.flip()
+            send_restart_request(sock)
+            time.sleep(10)
+            running = False
         elif enemy_in_checkmate(board, enemy_king_loc):
             print("Displaying Checkmate message (send end)!")
             display_message("YOU WIN")
-            # running = False
+            player_score += 1
+            print("Player score:", player_score)
+            print("Opponent score:", opponent_score)
+            delete_bottom_bar()
+            draw_bottom_bar(player_name, player_score)
+            pygame.display.flip()
+            time.sleep(10)
+            send_restart_request(sock)
+            time.sleep(10)
+            running = False
         elif enemy_in_stalemate(board, enemy_king_loc):
             print("Displaying Stalemate message (send end)!")
             display_message("Stalemate")
-            # running = False
+            player_score += 1
+            opponent_score += 1
+            print("Player score:", player_score)
+            print("Opponent score:", opponent_score)
+            delete_top_bar()
+            delete_bottom_bar()
+            draw_top_bar(opponent_name, opponent_score)
+            draw_bottom_bar(player_name, player_score)
+            pygame.display.flip()
+            send_restart_request(sock)
+            time.sleep(10)
+            running = False
 
         pygame.display.flip()
 
