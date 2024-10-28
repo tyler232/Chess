@@ -27,6 +27,8 @@ opponent_score = 0
 
 # Initialize Pygame
 pygame.init()
+icon = pygame.image.load('assets/icon.png')
+pygame.display.set_icon(icon)
 screen = pygame.display.set_mode((BOARD_WIDTH, BOARD_HEIGHT + 2 * BAR_HEIGHT))
 pygame.display.set_caption("Multiplayer Chess")
 
