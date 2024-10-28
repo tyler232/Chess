@@ -99,6 +99,60 @@ def draw_in_check(king_loc, player_color):
 
     pygame.draw.rect(screen, RED, (col * SQUARE_SIZE, row * SQUARE_SIZE + BAR_HEIGHT, SQUARE_SIZE, SQUARE_SIZE))
 
+def promotion_selection(player_color):
+    font = pygame.font.Font(None, 36)
+    options = ["q", "r", "b", "n"]  # The promotion options (Queen, Rook, Bishop, Knight)
+    piece_images = {
+        "q": pygame.image.load("assets/wq.png" if player_color == "WHITE" else "assets/bq.png"),
+        "r": pygame.image.load("assets/wr.png" if player_color == "WHITE" else "assets/br.png"),
+        "b": pygame.image.load("assets/wb.png" if player_color == "WHITE" else "assets/bb.png"),
+        "n": pygame.image.load("assets/wn.png" if player_color == "WHITE" else "assets/bn.png"),
+    }
+
+    selected_piece = None
+
+    # Set the dimensions and position for the selection box
+    box_width = 300
+    box_height = 120
+    box_x = (BOARD_WIDTH - box_width) // 2
+    box_y = (BOARD_HEIGHT - box_height) // 2
+
+    # Draw the selection box
+    pygame.draw.rect(screen, (0, 0, 0), (box_x, box_y, box_width, box_height))
+    pygame.draw.rect(screen, BROWN, (box_x + 5, box_y + 5, box_width - 10, box_height - 10))  # Inner white box
+
+    title_text = font.render("Promote to:", True, (255, 0, 0))
+    screen.blit(title_text, (box_x + 10, box_y + 10))
+    spacing = (box_width - 20) // len(options)
+
+    # Draw options (images)
+    for i, option in enumerate(options):
+        piece_image = piece_images[option]
+        piece_image = pygame.transform.scale(piece_image, (60, 60))  # Resize the image if needed
+        image_rect = piece_image.get_rect(center=(box_x + 10 + i * spacing + spacing // 2, box_y + box_height // 2))
+        screen.blit(piece_image, image_rect)
+
+    pygame.display.flip()
+
+    # Wait for user selection
+    while selected_piece is None:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pos = pygame.mouse.get_pos()
+                # Check if the click is within the selection box
+                if box_x < pos[0] < box_x + box_width and box_y < pos[1] < box_y + box_height:
+                    # Calculate which piece was clicked based on the position
+                    for i in range(len(options)):
+                        piece_rect = piece_images[options[i]].get_rect(center=(box_x + 10 + i * spacing + spacing // 2, box_y + box_height // 2))
+                        if piece_rect.collidepoint(pos):  # Check if click is on this piece
+                            selected_piece = options[i]  # Get the letter for the selected piece
+                            break
+    return selected_piece
+
+
 def display_message(message):
     font = pygame.font.Font(None, 74)
     text = font.render(message, True, (255, 0, 0))
