@@ -29,7 +29,7 @@ opponent_score = 0
 pygame.init()
 icon = pygame.image.load('assets/icon.png')
 pygame.display.set_icon(icon)
-screen = pygame.display.set_mode((BOARD_WIDTH, BOARD_HEIGHT + 2 * BAR_HEIGHT))
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE)
 pygame.display.set_caption("Multiplayer Chess")
 
 def read_until_nl(sock):
@@ -97,20 +97,21 @@ def prepare_new_game(sock, player_name, opponent_name):
     global player_score, opponent_score
     print("Player score:", player_score)
     print("Opponent score:", opponent_score)
-    delete_top_bar()
-    delete_bottom_bar()
-    draw_top_bar(opponent_name, opponent_score)
-    draw_bottom_bar(player_name, player_score)
+    delete_top_bar(screen)
+    delete_bottom_bar(screen)
+    draw_top_bar(screen, opponent_name, opponent_score)
+    draw_bottom_bar(screen, player_name, player_score)
     pygame.display.flip()
     send_restart_request(sock)
 
 def main():
+    global screen
     global client_running, game_running
     global selected_piece, possible_moves, color, turn
     global player_score, opponent_score
 
     # get the server IP and port from the user
-    display_message("Connecting to server...")
+    display_message(screen, "Connecting to server...")
     get_server_info()
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -125,25 +126,25 @@ def main():
     print("Connection status:", connection_status)
     if connection_status == "WAIT":
         screen.fill((0, 0, 0))
-        display_message("Waiting for another player to connect...")
+        display_message(screen, "Waiting for another player to connect...")
     elif connection_status == "FULL":
         screen.fill((0, 0, 0))
-        display_message("Game is full")
+        display_message(screen, "Game is full")
         client_running = False
         return
     connection_status = read_until_nl(sock)
     print("Connection status:", connection_status)
     if connection_status == "STRT":
         screen.fill((0, 0, 0))
-        display_message("Game Starts!")
+        display_message(screen, "Game Starts!")
     elif connection_status == "RSRT":
         screen.fill((0, 0, 0))
-        display_message("Game Resumes!")
+        display_message(screen, "Game Resumes!")
 
     # Receive the color from the server
     receive_color(sock)
     screen.fill((0, 0, 0))
-    display_message("You are " + color)
+    display_message(screen, "You are " + color)
     set_current_player(color)
 
     # Receive the opponent's name from the server
@@ -164,7 +165,7 @@ def main():
             ["", "", "", "", "", "", "", ""],
             ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
             ["wr", "wn", "wb", "wq", "wk", "wb", "wn", "wr"]
-        ]
+       ]
 
         game_running = True
         # Start a thread to receive moves from the server
@@ -174,9 +175,9 @@ def main():
         enemy_king_in_check = False
 
         while game_running:
-            draw_top_bar(opponent_name, opponent_score)
-            draw_board()
-            draw_bottom_bar(player_name, player_score)
+            draw_top_bar(screen, opponent_name, opponent_score)
+            draw_board(screen)
+            draw_bottom_bar(screen, player_name, player_score)
 
             king_loc = find_king(board)
             checking = in_check(board, king_loc)
@@ -189,47 +190,43 @@ def main():
                 enemy_king_in_check = False
 
             if selected_piece:
-                # draw_select_piece(selected_piece, "WHITE")
-                draw_select_piece(selected_piece, color)
+                draw_select_piece(screen, selected_piece, color)
             if possible_moves:
-                # draw_possible_moves(possible_moves, "WHITE")
-                draw_possible_moves(possible_moves, color)
+                draw_possible_moves(screen, possible_moves, color)
             if checking:
-                # draw_in_check(king_loc, "WHITE")
-                draw_in_check(king_loc, color)
+                draw_in_check(screen, king_loc, color)
             elif enemy_king_in_check:
-                # draw_in_check(enemy_king_loc, "WHITE")  # Always draw if the enemy king is in check
-                draw_in_check(enemy_king_loc, color)
+                draw_in_check(screen, enemy_king_loc, color)
 
 
             # draw_pieces("WHITE", board)
-            draw_pieces(color, board)
+            draw_pieces(screen, color, board)
 
             if in_checkmate(board, king_loc):
-                print("Displaying Checkmate message (send end)!")
-                display_message("YOU LOST")
+                print(screen, "Displaying Checkmate message (send end)!")
+                display_message(screen, "YOU LOST")
                 opponent_score += 1
                 prepare_new_game(sock, player_name, opponent_name)
                 game_running = False
                 break
             elif in_stalemate(board, king_loc):
-                print("Displaying Stalemate message (send end)!")
-                display_message("Stalemate")
+                print(screen, "Displaying Stalemate message (send end)!")
+                display_message(screen, "Stalemate")
                 player_score += 1
                 opponent_score += 1
                 prepare_new_game(sock, player_name, opponent_name)
                 game_running = False
                 break
             elif enemy_in_checkmate(board, enemy_king_loc):
-                print("Displaying Checkmate message (send end)!")
-                display_message("YOU WIN")
+                print(screen, "Displaying Checkmate message (send end)!")
+                display_message(screen, "YOU WIN")
                 player_score += 1
                 prepare_new_game(sock, player_name, opponent_name)
                 game_running = False
                 break
             elif enemy_in_stalemate(board, enemy_king_loc):
-                print("Displaying Stalemate message (send end)!")
-                display_message("Stalemate")
+                print(screen, "Displaying Stalemate message (send end)!")
+                display_message(screen, "Stalemate")
                 player_score += 1
                 opponent_score += 1
                 prepare_new_game(sock, player_name, opponent_name)
@@ -242,11 +239,19 @@ def main():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
-
-                if event.type == pygame.MOUSEBUTTONDOWN:
+                elif event.type == pygame.VIDEORESIZE:
+                    screen = resize_screen(event.w, event.h)
+                    global SCREEN_WIDTH, SCREEN_HEIGHT, BOARD_WIDTH, BOARD_HEIGHT, SQUARE_SIZE, BOARD_START_X, BOARD_START_Y
+                    SCREEN_WIDTH, SCREEN_HEIGHT = event.w, event.h
+                    BOARD_WIDTH, BOARD_HEIGHT = int(SCREEN_WIDTH * 0.84), int(SCREEN_HEIGHT * 0.84)
+                    BOARD_WIDTH = BOARD_HEIGHT = min(BOARD_WIDTH, BOARD_HEIGHT)
+                    SQUARE_SIZE = BOARD_WIDTH // COLS
+                    BOARD_START_X = (SCREEN_WIDTH - BOARD_WIDTH) // 2
+                    BOARD_START_Y = (SCREEN_HEIGHT - BOARD_HEIGHT) // 2
+                elif event.type == pygame.MOUSEBUTTONDOWN:
                     pos = pygame.mouse.get_pos()
-                    col = pos[0] // SQUARE_SIZE
-                    row = (pos[1] - BAR_HEIGHT) // SQUARE_SIZE
+                    col = (pos[0] - BOARD_START_X) // SQUARE_SIZE
+                    row = (pos[1] - BOARD_START_Y) // SQUARE_SIZE
                     if row < 0 or row >= ROWS:
                         continue
                     if color == "BLACK":
@@ -279,7 +284,7 @@ def main():
                 if move:
                     board = move["board"]
                     print("NEW BOARD:", board)
-                    draw_pieces(color, board)
+                    draw_pieces(screen, color, board)
                     update_lastmove((move["piece"], move["from"], move["to"]))
                     turn = True
 
