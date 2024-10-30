@@ -56,12 +56,6 @@ def draw_bottom_bar(screen, player_name, score):
 def delete_bottom_bar(screen):
     pygame.draw.rect(screen, BLACK, (0, BOARD_HEIGHT + BAR_HEIGHT, BOARD_WIDTH, BAR_HEIGHT))
     
-# def draw_board():
-#     for row in range(ROWS):
-#         for col in range(COLS):
-#             color = LIGHT_BROWN if (row + col) % 2 == 0 else BROWN
-#             pygame.draw.rect(screen, color, (col * SQUARE_SIZE, BAR_HEIGHT + row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
-
 def draw_board(screen):
     # Calculate the starting position of the board
     board_start_x = (SCREEN_WIDTH - BOARD_WIDTH) // 2
@@ -162,13 +156,14 @@ def promotion_selection(screen, player_color):
     return selected_piece
 
 def resize_screen(width, height):
-    global SCREEN_WIDTH, SCREEN_HEIGHT, BOARD_WIDTH, BOARD_HEIGHT, SQUARE_SIZE, BOARD_START_X, BOARD_START_Y
+    global SCREEN_WIDTH, SCREEN_HEIGHT, BOARD_WIDTH, BOARD_HEIGHT, SQUARE_SIZE, BOARD_START_X, BOARD_START_Y, BAR_HEIGHT
     SCREEN_WIDTH, SCREEN_HEIGHT = width, height
     BOARD_WIDTH, BOARD_HEIGHT = int(SCREEN_WIDTH * 0.84), int(SCREEN_HEIGHT * 0.84)
     BOARD_WIDTH = BOARD_HEIGHT = min(BOARD_WIDTH, BOARD_HEIGHT)
     SQUARE_SIZE = BOARD_WIDTH // COLS
     BOARD_START_X = (SCREEN_WIDTH - BOARD_WIDTH) // 2
     BOARD_START_Y = (SCREEN_HEIGHT - BOARD_HEIGHT) // 2
+    BAR_HEIGHT = (SCREEN_HEIGHT - BOARD_HEIGHT) // 2
     for piece in PIECES:
         PIECES[piece] = pygame.transform.scale(PIECES[piece], (SQUARE_SIZE, SQUARE_SIZE))
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE)

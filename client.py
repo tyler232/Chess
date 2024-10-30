@@ -248,6 +248,7 @@ def main():
                     SQUARE_SIZE = BOARD_WIDTH // COLS
                     BOARD_START_X = (SCREEN_WIDTH - BOARD_WIDTH) // 2
                     BOARD_START_Y = (SCREEN_HEIGHT - BOARD_HEIGHT) // 2
+                    BAR_HEIGHT = (SCREEN_HEIGHT - BOARD_HEIGHT) // 2
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     pos = pygame.mouse.get_pos()
                     col = (pos[0] - BOARD_START_X) // SQUARE_SIZE
