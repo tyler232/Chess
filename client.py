@@ -251,6 +251,8 @@ def main():
                     BAR_HEIGHT = (SCREEN_HEIGHT - BOARD_HEIGHT) // 2
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     pos = pygame.mouse.get_pos()
+                    if (pos[0] < BOARD_START_X or pos[0] > BOARD_START_X + BOARD_WIDTH) or (pos[1] < BOARD_START_Y or pos[1] > BOARD_START_Y + BOARD_HEIGHT):
+                        continue
                     col = (pos[0] - BOARD_START_X) // SQUARE_SIZE
                     row = (pos[1] - BOARD_START_Y) // SQUARE_SIZE
                     if row < 0 or row >= ROWS:

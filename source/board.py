@@ -102,7 +102,7 @@ def draw_in_check(screen, king_loc, player_color):
 
     pygame.draw.rect(screen, RED, (BOARD_START_X + col * SQUARE_SIZE, BOARD_START_Y + row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
 
-def promotion_selection(screen, player_color):
+def promotion_selection(player_color):
     font = pygame.font.Font(None, 36)
     options = ["q", "r", "b", "n"]  # The promotion options (Queen, Rook, Bishop, Knight)
     piece_images = {
