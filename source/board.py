@@ -183,6 +183,7 @@ def promotion_selection(player_color):
                         if piece_rect.collidepoint(pos):  # Check if click is on this piece
                             selected_piece = options[i]  # Get the letter for the selected piece
                             break
+    clear_screen(screen)
     return selected_piece
 
 def resize_screen(width, height):
@@ -200,6 +201,7 @@ def resize_screen(width, height):
     for piece in PIECES:
         PIECES[piece] = pygame.transform.scale(PIECES[piece], (SQUARE_SIZE, SQUARE_SIZE))
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE)
+    clear_screen(screen)
     return screen
 
 def display_message(screen, message):
@@ -212,3 +214,12 @@ def display_message(screen, message):
     screen.blit(text, text_rect)
     pygame.display.flip()
     pygame.time.wait(2000)
+
+def clear_screen(screen):
+    '''
+    clear the screen to the default background image
+    '''
+    background = pygame.image.load('assets/background.png')
+    background = pygame.transform.scale(background, (SCREEN_WIDTH, SCREEN_HEIGHT))
+    screen.blit(background, (0, 0))
+    pygame.display.flip()

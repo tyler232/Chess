@@ -129,12 +129,12 @@ def prepare_new_game(sock, player_name, opponent_name):
     @return: None
     '''
     global player_score, opponent_score
-    print("Player score:", player_score)
-    print("Opponent score:", opponent_score)
     delete_top_bar(screen)
     delete_bottom_bar(screen)
+    clear_screen(screen)
     draw_top_bar(screen, opponent_name, opponent_score)
     draw_bottom_bar(screen, player_name, player_score)
+    display_message(screen, "New Game Starting")
     pygame.display.flip()
     send_restart_request(sock)
 
@@ -143,7 +143,8 @@ def main():
     global client_running, game_running
     global selected_piece, possible_moves, color, turn
     global player_score, opponent_score
-
+    clear_screen(screen)
+    
     # get the server IP and port from the user
     display_message(screen, "Connecting to server...")
     get_server_info()
@@ -159,25 +160,25 @@ def main():
     connection_status = read_until_nl(sock)
     print("Connection status:", connection_status)
     if connection_status == "WAIT":
-        screen.fill((0, 0, 0))
-        display_message(screen, "Waiting for another player to connect...")
+        clear_screen(screen)
+        display_message(screen, "Waiting for opponent...")
     elif connection_status == "FULL":
-        screen.fill((0, 0, 0))
+        clear_screen(screen)
         display_message(screen, "Game is full")
         client_running = False
         return
     connection_status = read_until_nl(sock)
     print("Connection status:", connection_status)
     if connection_status == "STRT":
-        screen.fill((0, 0, 0))
+        clear_screen(screen)
         display_message(screen, "Game Starts!")
     elif connection_status == "RSRT":
-        screen.fill((0, 0, 0))
+        clear_screen(screen)
         display_message(screen, "Game Resumes!")
 
     # Receive the color from the server
     receive_color(sock)
-    screen.fill((0, 0, 0))
+    clear_screen(screen)
     display_message(screen, "You are " + color)
     set_current_player(color)
 
@@ -339,8 +340,8 @@ def main():
         set_current_player(color)
         turn = True if color == "WHITE" else False
 
-        # wait 10 seconds until start next game
-        time.sleep(10)
+        # wait 5 seconds until start next game
+        time.sleep(5)
 
 if __name__ == "__main__":
     main()
