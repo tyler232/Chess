@@ -33,6 +33,11 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE
 pygame.display.set_caption("Multiplayer Chess")
 
 def read_until_nl(sock):
+    '''
+    read data from the socket until a newline character is encountered
+    @param sock: the socket to read from
+    @return: the data read from the socket
+    '''
     buffer = ""
     recv_bit = 0
     while True:
@@ -46,6 +51,9 @@ def read_until_nl(sock):
     return buffer
 
 def get_server_info():
+    '''
+    get the server IP and port from the user, also set up user id
+    '''
     global SERVER_IP, SERVER_PORT, SERVER_ADDRESS, PLAYER_ID
 
     ip_input = input(f"Enter server IP (default: {SERVER_IP}): ") or SERVER_IP
@@ -60,12 +68,26 @@ def get_server_info():
     print(f"Connecting to server at {SERVER_IP}:{SERVER_PORT}...")
 
 def send_restart_request(sock):
+    '''
+    send a request to the server to restart the game
+    @param sock: the server socket to send data to
+    '''
     sock.sendall(b"RSTG\n")
 
 def send_move(move, sock):
+    '''
+    send a move to the server
+    @param move: the move to send
+    @param sock: the server socket to send data to
+    '''
     sock.sendall(pickle.dumps(move))
 
 def receive_moves(sock):
+    '''
+    Thread function to receive moves from the server
+    @param sock: the server socket to receive data from
+    @return: None
+    '''
     global move_queue, game_running
     print("Starting receive_moves thread...")
     while game_running:
@@ -89,11 +111,23 @@ def receive_moves(sock):
     print("Exiting receive_moves thread...")
 
 def receive_color(sock):
+    '''
+    receive the color from the server
+    @param sock: the server socket to receive data from
+    @return: None
+    '''
     global color
     color = read_until_nl(sock)
     print(f"Received color from server: {color} (length: {len(color)})")
 
 def prepare_new_game(sock, player_name, opponent_name):
+    '''
+    prepare for a new game by resetting the board and sending a restart request to the server
+    @param sock: the server socket to send data to
+    @param player_name: the name of the player
+    @param opponent_name: the name of the opponent
+    @return: None
+    '''
     global player_score, opponent_score
     print("Player score:", player_score)
     print("Opponent score:", opponent_score)
@@ -151,9 +185,9 @@ def main():
     opponent_name = read_until_nl(sock)
     player_name = PLAYER_ID
     
+    # set up first hand
     if color == "WHITE":
         turn = True
-
 
     while client_running:
         board = [
@@ -175,10 +209,12 @@ def main():
         enemy_king_in_check = False
 
         while game_running:
+            # Draw the screen
             draw_top_bar(screen, opponent_name, opponent_score)
             draw_board(screen)
             draw_bottom_bar(screen, player_name, player_score)
 
+            # check if the player is in check
             king_loc = find_king(board)
             checking = in_check(board, king_loc)
             enemy_king_loc = find_enemy_king(board)
@@ -199,7 +235,6 @@ def main():
                 draw_in_check(screen, enemy_king_loc, color)
 
 
-            # draw_pieces("WHITE", board)
             draw_pieces(screen, color, board)
 
             if in_checkmate(board, king_loc):
@@ -241,7 +276,7 @@ def main():
                     sys.exit()
                 elif event.type == pygame.VIDEORESIZE:
                     screen = resize_screen(event.w, event.h)
-                    global SCREEN_WIDTH, SCREEN_HEIGHT, BOARD_WIDTH, BOARD_HEIGHT, SQUARE_SIZE, BOARD_START_X, BOARD_START_Y
+                    global SCREEN_WIDTH, SCREEN_HEIGHT, BOARD_WIDTH, BOARD_HEIGHT, SQUARE_SIZE, BOARD_START_X, BOARD_START_Y, BAR_HEIGHT
                     SCREEN_WIDTH, SCREEN_HEIGHT = event.w, event.h
                     BOARD_WIDTH, BOARD_HEIGHT = int(SCREEN_WIDTH * 0.84), int(SCREEN_HEIGHT * 0.84)
                     BOARD_WIDTH = BOARD_HEIGHT = min(BOARD_WIDTH, BOARD_HEIGHT)
@@ -251,10 +286,12 @@ def main():
                     BAR_HEIGHT = (SCREEN_HEIGHT - BOARD_HEIGHT) // 2
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     pos = pygame.mouse.get_pos()
+                    # Check if the click is within the board
                     if (pos[0] < BOARD_START_X or pos[0] > BOARD_START_X + BOARD_WIDTH) or (pos[1] < BOARD_START_Y or pos[1] > BOARD_START_Y + BOARD_HEIGHT):
                         continue
                     col = (pos[0] - BOARD_START_X) // SQUARE_SIZE
                     row = (pos[1] - BOARD_START_Y) // SQUARE_SIZE
+
                     if row < 0 or row >= ROWS:
                         continue
                     if color == "BLACK":
@@ -302,6 +339,7 @@ def main():
         set_current_player(color)
         turn = True if color == "WHITE" else False
 
+        # wait 10 seconds until start next game
         time.sleep(10)
 
 if __name__ == "__main__":
