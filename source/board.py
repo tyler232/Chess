@@ -35,6 +35,9 @@ for piece in PIECES:
     PIECES[piece] = pygame.transform.scale(PIECES[piece], (SQUARE_SIZE, SQUARE_SIZE))
 
 def draw_top_bar(screen, opponent_name, score):
+    '''
+    Draw the top bar with the opponent's name and score
+    '''
     font_size = int(BAR_HEIGHT * 0.4)
     font = pygame.font.Font(None, font_size)
     text = font.render(f"Opponent: {opponent_name}", True, WHITE)
@@ -43,9 +46,15 @@ def draw_top_bar(screen, opponent_name, score):
     screen.blit(score_text, (10, 10 + font_size))
 
 def delete_top_bar(screen):
+    '''
+    Delete the top bar
+    '''
     pygame.draw.rect(screen, BLACK, (0, 0, BOARD_WIDTH, BAR_HEIGHT))
 
 def draw_bottom_bar(screen, player_name, score):
+    '''
+    Draw the bottom bar with the player's name and score
+    '''
     font_size = int(BAR_HEIGHT * 0.4)
     font = pygame.font.Font(None, font_size)
     text = font.render(f"Player: {player_name}", True, WHITE)
@@ -54,9 +63,15 @@ def draw_bottom_bar(screen, player_name, score):
     screen.blit(score_text, (10, BOARD_HEIGHT + BAR_HEIGHT + 36))
 
 def delete_bottom_bar(screen):
+    '''
+    Delete the bottom bar
+    '''
     pygame.draw.rect(screen, BLACK, (0, BOARD_HEIGHT + BAR_HEIGHT, BOARD_WIDTH, BAR_HEIGHT))
     
 def draw_board(screen):
+    '''
+    Draw the chess board
+    '''
     # Calculate the starting position of the board
     board_start_x = (SCREEN_WIDTH - BOARD_WIDTH) // 2
     board_start_y = (SCREEN_HEIGHT - BOARD_HEIGHT) // 2
@@ -66,6 +81,9 @@ def draw_board(screen):
             pygame.draw.rect(screen, color, (board_start_x + col * SQUARE_SIZE, board_start_y + row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
 
 def draw_select_piece(screen, selected_piece, player_color):
+    '''
+    draw a green square around the selected piece
+    '''
     if player_color == "BLACK":
         row = ROWS - 1 - selected_piece[0]  # Reverse the row for Black
         col = selected_piece[1]
@@ -75,6 +93,9 @@ def draw_select_piece(screen, selected_piece, player_color):
     pygame.draw.rect(screen, GREEN, (BOARD_START_X + col * SQUARE_SIZE, BOARD_START_Y + row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
 
 def draw_possible_moves(screen, possible_moves, player_color):
+    '''
+    Draw green squares around the possible moves
+    '''
     for move in possible_moves:
         if player_color == "BLACK":
             row = ROWS - 1 - move[0]  # Reverse the row for Black
@@ -84,6 +105,9 @@ def draw_possible_moves(screen, possible_moves, player_color):
         pygame.draw.rect(screen, GREEN, (BOARD_START_X + col * SQUARE_SIZE, BOARD_START_Y + row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
 
 def draw_pieces(screen, player_color, board):
+    '''
+    draw pieces on board
+    '''
     for row in range(ROWS):
         for col in range(COLS):
             piece = board[row][col]
@@ -94,6 +118,9 @@ def draw_pieces(screen, player_color, board):
                     screen.blit(PIECES[piece], (BOARD_START_X + col * SQUARE_SIZE, BOARD_START_Y + (ROWS - 1 - row) * SQUARE_SIZE))
 
 def draw_in_check(screen, king_loc, player_color):
+    '''
+    draw a red square around the king if in check
+    '''
     if player_color == "BLACK":
         row = ROWS - 1 - king_loc[0]
         col = king_loc[1]
@@ -103,6 +130,9 @@ def draw_in_check(screen, king_loc, player_color):
     pygame.draw.rect(screen, RED, (BOARD_START_X + col * SQUARE_SIZE, BOARD_START_Y + row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
 
 def promotion_selection(player_color):
+    '''
+    promotion selection screen and return the selected piece of which the pawn will be promoted to
+    '''
     font = pygame.font.Font(None, 36)
     options = ["q", "r", "b", "n"]  # The promotion options (Queen, Rook, Bishop, Knight)
     piece_images = {
@@ -156,6 +186,9 @@ def promotion_selection(player_color):
     return selected_piece
 
 def resize_screen(width, height):
+    '''
+    resize the screen and return the new screen
+    '''
     global SCREEN_WIDTH, SCREEN_HEIGHT, BOARD_WIDTH, BOARD_HEIGHT, SQUARE_SIZE, BOARD_START_X, BOARD_START_Y, BAR_HEIGHT
     SCREEN_WIDTH, SCREEN_HEIGHT = width, height
     BOARD_WIDTH, BOARD_HEIGHT = int(SCREEN_WIDTH * 0.84), int(SCREEN_HEIGHT * 0.84)
@@ -170,6 +203,9 @@ def resize_screen(width, height):
     return screen
 
 def display_message(screen, message):
+    '''
+    display a message on the screen
+    '''
     font = pygame.font.Font(None, 74)
     text = font.render(message, True, (255, 0, 0))
     text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
