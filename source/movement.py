@@ -576,6 +576,9 @@ def set_current_player(player):
     elif player == "BLACK":
         current_player = "b"
 
+def get_last_move():
+    return last_move
+
 def update_lastmove(move):
     global last_move
     last_move = move

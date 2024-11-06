@@ -217,6 +217,7 @@ def main():
 
             # check if the player is in check
             king_loc = find_king(board)
+            last_move = get_last_move()
             checking = in_check(board, king_loc)
             enemy_king_loc = find_enemy_king(board)
             enemy_in_check_status = enemy_in_check(board, enemy_king_loc)
@@ -234,7 +235,9 @@ def main():
                 draw_in_check(screen, king_loc, color)
             elif enemy_king_in_check:
                 draw_in_check(screen, enemy_king_loc, color)
-
+            
+            if last_move and ((last_move[0][0] == "w" and color == "BLACK") or (last_move and last_move[0][0] == "b" and color == "WHITE")):
+                draw_last_move(last_move, screen, color)
 
             draw_pieces(screen, color, board)
 

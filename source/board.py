@@ -132,6 +132,33 @@ def draw_in_check(screen, king_loc, player_color):
 
     pygame.draw.rect(screen, RED, (BOARD_START_X + col * SQUARE_SIZE, BOARD_START_Y + row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
 
+def draw_last_move(last_move, screen, player_color):
+    '''
+    draw a yellow outer layer around the last move
+    '''
+    if not last_move:
+        return  # If there’s no last move, simply return
+    
+    last_move_from = last_move[1]  # Starting position of the move (row, col)
+    last_move_to = last_move[2]    # Ending position of the move (row, col)
+    color = (255, 255, 0)  # Yellow color for highlighting
+
+    # Yellow border for the 'from' square
+    from_x = BOARD_START_X + last_move_from[1] * SQUARE_SIZE
+    from_y = BOARD_START_Y + last_move_from[0] * SQUARE_SIZE
+
+    # Yellow border for the 'to' square
+    to_x = BOARD_START_X + last_move_to[1] * SQUARE_SIZE
+    to_y = BOARD_START_Y + last_move_to[0] * SQUARE_SIZE
+
+    if player_color == "BLACK":
+        from_y = BOARD_START_Y + (ROWS - 1 - last_move_from[0]) * SQUARE_SIZE
+        to_y = BOARD_START_Y + (ROWS - 1 - last_move_to[0]) * SQUARE_SIZE
+
+    pygame.draw.rect(screen, color, (to_x, to_y, SQUARE_SIZE, SQUARE_SIZE), 5)
+    pygame.draw.rect(screen, color, (from_x, from_y, SQUARE_SIZE, SQUARE_SIZE), 5)
+
+
 def promotion_selection(player_color):
     '''
     promotion selection screen and return the selected piece of which the pawn will be promoted to
@@ -265,7 +292,6 @@ def request_temp_message(screen, message, duration, player_color, board):
     interrupt_flag = False
     display_temp_message(screen, message, duration, player_color, board)
 
-
 def clear_screen(screen):
     '''
     clear the screen to the default background image
@@ -274,3 +300,4 @@ def clear_screen(screen):
     background = pygame.transform.scale(background, (SCREEN_WIDTH, SCREEN_HEIGHT))
     screen.blit(background, (0, 0))
     pygame.display.flip()
+
