@@ -298,7 +298,7 @@ def main():
                     if color == "BLACK":
                         row = ROWS - 1 - row
                     if selected_piece:
-                        sucess = move_piece(board, possible_moves, selected_piece, (row, col))
+                        sucess = move_piece(screen, board, possible_moves, selected_piece, (row, col))
                         if sucess:
                             piece = board[row][col]
                             print("Send Moved piece:", piece)
@@ -318,6 +318,9 @@ def main():
                         if turn and piece and ((piece[0] == "w" and color == "WHITE") or (piece[0] == "b" and color == "BLACK")):
                             selected_piece = (row, col)
                             possible_moves = get_possible_moves(board, selected_piece)
+                        elif not turn and piece and ((piece[0] == "w" and color == "WHITE") or (piece[0] == "b" and color == "BLACK")):
+                            print("Not your turn")
+                            request_temp_message(screen, "Not your turn", 1000, color, board)
 
             # Check if there are any moves in the queue from the server
             while move_queue:

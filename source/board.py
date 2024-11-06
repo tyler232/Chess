@@ -1,4 +1,5 @@
 import pygame
+import time
 
 SCREEN_WIDTH, SCREEN_HEIGHT = 900, 900
 BOARD_WIDTH, BOARD_HEIGHT = int(SCREEN_WIDTH * 0.84), int(SCREEN_HEIGHT * 0.84)
@@ -29,6 +30,8 @@ PIECES = {
     "wk": pygame.image.load("assets/wk.png"),  # white king
     "bk": pygame.image.load("assets/bk.png"),  # black king
 }
+
+msg_interrupt_flag = False
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE)
 for piece in PIECES:
@@ -214,6 +217,48 @@ def display_message(screen, message):
     screen.blit(text, text_rect)
     pygame.display.flip()
     pygame.time.wait(2000)
+
+def display_temp_message(screen, message, duration, player_color, board):
+    '''
+    Display a temporary message centered on the board, interruptible by new messages.
+    '''
+    global interrupt_flag
+    interrupt_flag = True  # Set flag to indicate a new message is being displayed
+
+    font = pygame.font.Font(None, 36)
+    msg_surface = font.render(message, True, (255, 255, 255))
+    msg_rec = msg_surface.get_rect(center=(
+        BOARD_START_X + BOARD_WIDTH // 2,
+        BOARD_START_Y + BOARD_HEIGHT // 2
+    ))
+
+    # Draw the message and update the display
+    screen.blit(msg_surface, msg_rec)
+    pygame.display.flip()
+    
+    # Track the start time to manage duration
+    start_time = time.time()
+    
+    while time.time() - start_time < duration / 1000.0:
+        # Check if an interrupt request has come in
+        if not interrupt_flag:
+            break
+        pygame.event.pump()  # Handle events to avoid freezing
+
+    # Reset the interrupt flag and clear the message by redrawing
+    interrupt_flag = False
+    draw_board(screen)
+    draw_pieces(screen, player_color, board)
+    pygame.display.flip()
+
+def request_temp_message(screen, message, duration, player_color, board):
+    '''
+    Request a new temporary message, interrupting any current message.
+    '''
+    global interrupt_flag
+    # Set the flag to immediately stop any current message
+    interrupt_flag = False
+    display_temp_message(screen, message, duration, player_color, board)
 
 def clear_screen(screen):
     '''
