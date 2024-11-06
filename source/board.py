@@ -243,6 +243,11 @@ def display_temp_message(screen, message, duration, player_color, board):
         # Check if an interrupt request has come in
         if not interrupt_flag:
             break
+
+        for event in pygame.event.get():
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                interrupt_flag = False  # Interrupt the message immediately
+                break
         pygame.event.pump()  # Handle events to avoid freezing
 
     # Reset the interrupt flag and clear the message by redrawing
@@ -259,6 +264,7 @@ def request_temp_message(screen, message, duration, player_color, board):
     # Set the flag to immediately stop any current message
     interrupt_flag = False
     display_temp_message(screen, message, duration, player_color, board)
+
 
 def clear_screen(screen):
     '''
