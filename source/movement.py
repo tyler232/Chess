@@ -99,11 +99,11 @@ def move_piece(screen, board, possible_moves, selected_piece, end_pos):
             display_temp_message(screen, "Check", 1000, color, board)
     # Pawn Promotion
     elif is_valid_move(board, possible_moves, end_pos) and piece == "wp" and end_row == 0:
-        new_piece = "w" + promotion_selection("WHITE")
         copy_board[start_row][start_col] = ""
-        copy_board[end_row][end_col] = new_piece
+        copy_board[end_row][end_col] = piece
         checking = in_check(copy_board, find_king(copy_board))
         if not checking:
+            new_piece = "w" + promotion_selection("WHITE")
             board[start_row][start_col] = ""
             board[end_row][end_col] = new_piece
             last_move = (piece, selected_piece, end_pos)
@@ -114,11 +114,11 @@ def move_piece(screen, board, possible_moves, selected_piece, end_pos):
             color = "WHITE" if current_player == "w" else "BLACK"
             display_temp_message(screen, "Check", 1000, color, board)
     elif is_valid_move(board, possible_moves, end_pos) and piece == "bp" and end_row == 7:
-        new_piece = "b" + promotion_selection("BLACK")
         copy_board[start_row][start_col] = ""
-        copy_board[end_row][end_col] = new_piece
+        copy_board[end_row][end_col] = piece
         checking = in_check(copy_board, find_king(copy_board))
         if not checking:
+            new_piece = "b" + promotion_selection("BLACK")
             board[start_row][start_col] = ""
             board[end_row][end_col] = new_piece
             last_move = (piece, selected_piece, end_pos)
