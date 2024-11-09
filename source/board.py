@@ -39,7 +39,7 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE
 for piece in PIECES:
     PIECES[piece] = pygame.transform.scale(PIECES[piece], (SQUARE_SIZE, SQUARE_SIZE))
 
-def draw_top_bar(screen, opponent_name, score):
+def draw_top_bar(screen, opponent_name, score, sound_on):
     '''
     Draw the top bar with the opponent's name and score
     '''
@@ -49,6 +49,24 @@ def draw_top_bar(screen, opponent_name, score):
     screen.blit(text, (10, 10))
     score_text = font.render(f"Score: {score}", True, WHITE)
     screen.blit(score_text, (10, 10 + font_size))
+
+    music_icon = pygame.image.load("assets/music_icon.png").convert_alpha()
+    icon_size = int(BAR_HEIGHT * 0.8)  # Scale icon to 80% of bar height
+    music_icon = pygame.transform.scale(music_icon, (icon_size, icon_size))
+    
+    # Calculate icon position as a percentage of the screen width
+    icon_x = screen.get_width() * 0.9  # 90% of screen width
+    icon_y = (BAR_HEIGHT - icon_size) / 2
+    music_icon_rect = pygame.Rect(icon_x, icon_y, icon_size, icon_size)
+    screen.blit(music_icon, (icon_x, icon_y))
+
+    if not sound_on:
+        line_thickness = 3
+        pygame.draw.line(screen, RED, (icon_x, icon_y), (icon_x + icon_size, icon_y + icon_size), line_thickness)
+        pygame.draw.line(screen, RED, (icon_x + icon_size, icon_y), (icon_x, icon_y + icon_size), line_thickness)
+    
+    return music_icon_rect
+
 
 def delete_top_bar(screen):
     '''

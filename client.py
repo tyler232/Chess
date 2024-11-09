@@ -25,9 +25,14 @@ turn = None
 player_score = 0
 opponent_score = 0
 
+music_button = None
+sound_on = True
+
 # Initialize Pygame
 pygame.init()
+pygame.mixer.init()
 icon = pygame.image.load('assets/icon.png')
+sound = pygame.mixer.Sound("assets/chess_move.wav")
 pygame.display.set_icon(icon)
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE)
 pygame.display.set_caption("Multiplayer Chess")
@@ -128,11 +133,11 @@ def prepare_new_game(sock, player_name, opponent_name):
     @param opponent_name: the name of the opponent
     @return: None
     '''
-    global player_score, opponent_score
+    global player_score, opponent_score, music_button, sound_on
     delete_top_bar(screen)
     delete_bottom_bar(screen)
     clear_screen(screen)
-    draw_top_bar(screen, opponent_name, opponent_score)
+    music_button = draw_top_bar(screen, opponent_name, opponent_score, sound_on)
     draw_bottom_bar(screen, player_name, player_score)
     display_message(screen, "New Game Starting")
     pygame.display.flip()
@@ -143,6 +148,7 @@ def main():
     global client_running, game_running
     global selected_piece, possible_moves, color, turn
     global player_score, opponent_score
+    global music_button, sound_on
     clear_screen(screen)
     
     # get the server IP and port from the user
@@ -213,7 +219,7 @@ def main():
 
         while game_running:
             # Draw the screen
-            draw_top_bar(screen, opponent_name, opponent_score)
+            music_button = draw_top_bar(screen, opponent_name, opponent_score, sound_on)
             draw_board(screen)
             button_info = draw_bottom_bar(screen, player_name, player_score)
 
@@ -293,6 +299,14 @@ def main():
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     pos = pygame.mouse.get_pos()
                     # check if the button is clicked
+                    # music button clicked
+                    if music_button.collidepoint(pos):
+                        print("Music Button clicked")
+                        # clear the cross
+                        if not sound_on:
+                            clear_screen(screen)
+                        sound_on = not sound_on
+                        continue
                     if button_info:
                         # resign button clicked
                         if button_clicked(pos[0], pos[1], button_info[0], button_info[1], button_info[4], button_info[5]):
@@ -355,6 +369,8 @@ def main():
                                     "board": board,
                                     "end_seeking": None}
                             send_move(move, sock)
+                            if sound_on:
+                                sound.play()
                             turn = False
                         selected_piece = None
                         possible_moves = []
@@ -408,6 +424,8 @@ def main():
                     print("NEW BOARD:", board)
                     draw_pieces(screen, color, board)
                     update_lastmove((move["piece"], move["from"], move["to"]))
+                    if sound_on:
+                        sound.play()
                     turn = True
                 
 
