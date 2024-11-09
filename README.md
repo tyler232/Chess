@@ -1,6 +1,12 @@
 # Chess
 
+> PvP chess game
+
+[![License](https://img.shields.io/badge/License-MIT-brightgreen.svg)](LICENSE)
+
+## Overview
 This is a chess game where two players can connect to a server and play against each other. The server is written in C, which handles communication between the two players via TCP, while the client uses Python’s PyGame for the game logic and frontend.
+
 
 ## Feature
 1. Allows two players to play against each other in real time, with both players able to see each other's moves.
