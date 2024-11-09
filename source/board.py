@@ -289,7 +289,7 @@ def draw_confirm_window(screen, text):
     '''
     Draw a confirmation window
     '''
-    window_width = int(SCREEN_WIDTH * 0.4)
+    window_width = int(SCREEN_WIDTH * 0.5)
     window_height = int(SCREEN_HEIGHT * 0.3)
     window_x = (SCREEN_WIDTH - window_width) // 2
     window_y = (SCREEN_HEIGHT - window_height) // 2
