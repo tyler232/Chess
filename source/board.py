@@ -14,6 +14,7 @@ BLACK = (0, 0, 0)
 BROWN = (139, 69, 19)
 LIGHT_BROWN = (245, 222, 179)
 GREEN = (0, 255, 0)
+GRAY = (200, 200, 200)
 RED = (255, 0, 0)
 
 PIECES = {
@@ -254,6 +255,69 @@ def resize_screen(width, height):
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE)
     clear_screen(screen)
     return screen
+
+def draw_confirm_window(screen, text):
+    '''
+    Draw a confirmation window
+    '''
+    window_width = int(SCREEN_WIDTH * 0.4)
+    window_height = int(SCREEN_HEIGHT * 0.3)
+    window_x = (SCREEN_WIDTH - window_width) // 2
+    window_y = (SCREEN_HEIGHT - window_height) // 2
+    pygame.draw.rect(screen, GRAY, (window_x, window_y, window_width, window_height))
+    pygame.draw.rect(screen, BLACK, (window_x, window_y, window_width, window_height), 2)
+
+    # Confirmation text
+    font = pygame.font.Font(None, int(SCREEN_HEIGHT * 0.03))
+    text = font.render(text, True, BLACK)
+    screen.blit(text, (window_x + int(SCREEN_HEIGHT * 0.05), window_y + int(SCREEN_HEIGHT * 0.08)))
+
+    # Draw "Yes" button
+    confirm_button_width = int(window_width * 0.25)
+    confirm_button_height = int(window_height * 0.15)
+
+    yes_button_x = window_x + int(window_width * 0.1)
+    yes_button_y = window_y + int(window_height * 0.55)
+    yes_button = pygame.Rect(yes_button_x, yes_button_y, confirm_button_width, confirm_button_height)
+    pygame.draw.rect(screen, RED, yes_button)
+    yes_text = font.render("Yes", True, WHITE)
+    screen.blit(yes_text, (yes_button_x + confirm_button_width // 3, yes_button_y + confirm_button_height // 6))
+
+    # Draw "No" button
+    no_button_x = window_x + int(window_width * 0.65)
+    no_button_y = yes_button_y
+    no_button = pygame.Rect(no_button_x, no_button_y, confirm_button_width, confirm_button_height)
+    pygame.draw.rect(screen, RED, no_button)
+    no_text = font.render("No", True, WHITE)
+    screen.blit(no_text, (no_button_x + confirm_button_width // 3, no_button_y + confirm_button_height // 6))
+
+
+    pygame.display.flip()
+
+    # Wait for user confirmation
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                return handle_confirmation(event, yes_button, no_button)
+            else:
+                break
+    return None
+
+def handle_confirmation(event, yes_button, no_button):
+    '''
+    Handle clicks on the "Yes" or "No" buttons in the confirm window.
+    '''
+    if event.type == pygame.MOUSEBUTTONDOWN:
+        if yes_button.collidepoint(event.pos):
+            print("Resignation confirmed")
+            return True
+        elif no_button.collidepoint(event.pos):
+            print("Resignation canceled")
+            return False
+    return None
 
 def display_message(screen, message):
     '''

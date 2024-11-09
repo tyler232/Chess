@@ -301,6 +301,8 @@ def main():
                                 display_temp_message(screen, "Not your turn", 1000, color, board)
                                 continue
                             else:
+                                if not draw_confirm_window(screen, "Are you sure you want to resign?"):
+                                    continue
                                 move = {"piece": None,
                                         "from": None,
                                         "to": None,
