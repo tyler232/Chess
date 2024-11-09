@@ -200,7 +200,7 @@ def main():
             ["", "", "", "", "", "", "", ""],
             ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
             ["wr", "wn", "wb", "wq", "wk", "wb", "wn", "wr"]
-       ]
+        ]
 
         game_running = True
         # Start a thread to receive moves from the server
@@ -295,7 +295,7 @@ def main():
                     # check if the button is clicked
                     if button_info:
                         # resign button clicked
-                        if button_clicked(pos[0], pos[1], button_info[0], button_info[1], button_info[2], button_info[3]):
+                        if button_clicked(pos[0], pos[1], button_info[0], button_info[1], button_info[4], button_info[5]):
                             print("Resign Button clicked")
                             if not turn:
                                 display_temp_message(screen, "Not your turn", 1000, color, board)
@@ -316,6 +316,23 @@ def main():
                                 prepare_new_game(sock, player_name, opponent_name)
                                 game_running = False
                                 break
+                        # draw button clicked
+                        elif button_clicked(pos[0], pos[1], button_info[2], button_info[3], button_info[4], button_info[5]):
+                            print("Draw Button clicked")
+                            if not turn:
+                                display_temp_message(screen, "Not your turn", 1000, color, board)
+                                continue
+                            else:
+                                if not draw_confirm_window(screen, "Are you sure you want to offer a draw?"):
+                                    continue
+                                move = {"piece": None,
+                                        "from": None,
+                                        "to": None,
+                                        "possible_moves": [],
+                                        "board": board,
+                                        "end_seeking": "draw_req"}
+                                send_move(move, sock)
+                                continue
                     # Check if the click is within the board
                     if (pos[0] < BOARD_START_X or pos[0] > BOARD_START_X + BOARD_WIDTH) or (pos[1] < BOARD_START_Y or pos[1] > BOARD_START_Y + BOARD_HEIGHT):
                         continue
@@ -361,6 +378,31 @@ def main():
                         player_score += 1
                         prepare_new_game(sock, player_name, opponent_name)
                         game_running = False
+                        update_lastmove(None)
+                        break
+                    elif move["end_seeking"] == "draw_req":
+                        if draw_confirm_window(screen, "Opponent offered a draw. Do you accept?"):
+                            display_message(screen, "DRAW")
+                            move = {"piece": None,
+                                    "from": None,
+                                    "to": None,
+                                    "possible_moves": [],
+                                    "board": board,
+                                    "end_seeking": "draw_conf"}
+                            send_move(move, sock)
+                            player_score += 1
+                            opponent_score += 1
+                            prepare_new_game(sock, player_name, opponent_name)
+                            game_running = False
+                            update_lastmove(None)
+                        break
+                    elif move["end_seeking"] == "draw_conf":
+                        display_message(screen, "DRAW")
+                        player_score += 1
+                        opponent_score += 1
+                        prepare_new_game(sock, player_name, opponent_name)
+                        game_running = False
+                        update_lastmove(None)
                         break
                     board = move["board"]
                     print("NEW BOARD:", board)

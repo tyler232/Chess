@@ -16,6 +16,7 @@ LIGHT_BROWN = (245, 222, 179)
 GREEN = (0, 255, 0)
 GRAY = (200, 200, 200)
 RED = (255, 0, 0)
+YELLOW = (255, 255, 0)
 
 PIECES = {
     "wp": pygame.image.load("assets/wp.png"),  # white pawn
@@ -72,14 +73,24 @@ def draw_bottom_bar(screen, player_name, score):
     button_height = int(BAR_HEIGHT * 0.6)
     resign_button_x = int(SCREEN_WIDTH * 0.85) - button_width
     resign_button_y = BOARD_HEIGHT + BAR_HEIGHT + int(BAR_HEIGHT * 0.2)
-    pygame.draw.rect(screen, (255, 0, 0), (resign_button_x, resign_button_y, button_width, button_height))
+    pygame.draw.rect(screen, RED, (resign_button_x, resign_button_y, button_width, button_height))
+
+    # Draw Draw button
+    draw_button_x = int(SCREEN_WIDTH * 0.80) - (2 * button_width)
+    draw_button_y = resign_button_y
+    pygame.draw.rect(screen, YELLOW, (draw_button_x, draw_button_y, button_width, button_height))
     
-    # Draw button text
+    # Draw resign button text
     button_text = font.render("Resign", True, WHITE)
     text_rect = button_text.get_rect(center=(resign_button_x + button_width / 2, resign_button_y + button_height / 2))
     screen.blit(button_text, text_rect)
-    
-    return [resign_button_x, resign_button_y, button_width, button_height]
+
+    # Draw stalemate button text
+    button_text = font.render("Draw", True, BLACK)
+    text_rect = button_text.get_rect(center=(draw_button_x + button_width / 2, draw_button_y + button_height / 2)) 
+    screen.blit(button_text, text_rect)
+
+    return [resign_button_x, resign_button_y, draw_button_x, draw_button_y, button_width, button_height]
 
 def button_clicked(mouse_x, mouse_y, button_x, button_y, button_width, button_height):
     '''
