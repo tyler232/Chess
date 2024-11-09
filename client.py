@@ -208,12 +208,14 @@ def main():
         receive_thread.start()
 
         enemy_king_in_check = False
+        
+        button_info = None
 
         while game_running:
             # Draw the screen
             draw_top_bar(screen, opponent_name, opponent_score)
             draw_board(screen)
-            draw_bottom_bar(screen, player_name, player_score)
+            button_info = draw_bottom_bar(screen, player_name, player_score)
 
             # check if the player is in check
             king_loc = find_king(board)
@@ -290,6 +292,28 @@ def main():
                     BAR_HEIGHT = (SCREEN_HEIGHT - BOARD_HEIGHT) // 2
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     pos = pygame.mouse.get_pos()
+                    # check if the button is clicked
+                    if button_info:
+                        # resign button clicked
+                        if button_clicked(pos[0], pos[1], button_info[0], button_info[1], button_info[2], button_info[3]):
+                            print("Resign Button clicked")
+                            if not turn:
+                                display_temp_message(screen, "Not your turn", 1000, color, board)
+                                continue
+                            else:
+                                move = {"piece": None,
+                                        "from": None,
+                                        "to": None,
+                                        "possible_moves": [],
+                                        "board": board,
+                                        "end_seeking": "resign"}
+                                send_move(move, sock)
+                                turn = False
+                                display_message(screen, "YOU RESIGNED")
+                                opponent_score += 1
+                                prepare_new_game(sock, player_name, opponent_name)
+                                game_running = False
+                                break
                     # Check if the click is within the board
                     if (pos[0] < BOARD_START_X or pos[0] > BOARD_START_X + BOARD_WIDTH) or (pos[1] < BOARD_START_Y or pos[1] > BOARD_START_Y + BOARD_HEIGHT):
                         continue
@@ -309,7 +333,8 @@ def main():
                                     "from": selected_piece, 
                                     "to": (row, col),
                                     "possible_moves": possible_moves,
-                                    "board": board}
+                                    "board": board,
+                                    "end_seeking": None}
                             send_move(move, sock)
                             turn = False
                         selected_piece = None
@@ -329,11 +354,18 @@ def main():
             while move_queue:
                 move = move_queue.pop(0)  # Get the first move from the queue
                 if move:
+                    if move["end_seeking"] == "resign":
+                        display_message(screen, "OPPONENT RESIGNED")
+                        player_score += 1
+                        prepare_new_game(sock, player_name, opponent_name)
+                        game_running = False
+                        break
                     board = move["board"]
                     print("NEW BOARD:", board)
                     draw_pieces(screen, color, board)
                     update_lastmove((move["piece"], move["from"], move["to"]))
                     turn = True
+                
 
         print("out of game loop")
         print(game_running)    

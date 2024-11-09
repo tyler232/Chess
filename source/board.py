@@ -56,14 +56,35 @@ def delete_top_bar(screen):
 
 def draw_bottom_bar(screen, player_name, score):
     '''
-    Draw the bottom bar with the player's name and score
+    Draw the bottom bar with the player's name, score, and resign button.
     '''
+    # Draw the info text
     font_size = int(BAR_HEIGHT * 0.4)
     font = pygame.font.Font(None, font_size)
     text = font.render(f"Player: {player_name}", True, WHITE)
     screen.blit(text, (10, BOARD_HEIGHT + BAR_HEIGHT))
     score_text = font.render(f"Score: {score}", True, WHITE)
     screen.blit(score_text, (10, BOARD_HEIGHT + BAR_HEIGHT + 36))
+
+    # Draw resign button
+    button_width = int(SCREEN_WIDTH * 0.15)
+    button_height = int(BAR_HEIGHT * 0.6)
+    resign_button_x = int(SCREEN_WIDTH * 0.85) - button_width
+    resign_button_y = BOARD_HEIGHT + BAR_HEIGHT + int(BAR_HEIGHT * 0.2)
+    pygame.draw.rect(screen, (255, 0, 0), (resign_button_x, resign_button_y, button_width, button_height))
+    
+    # Draw button text
+    button_text = font.render("Resign", True, WHITE)
+    text_rect = button_text.get_rect(center=(resign_button_x + button_width / 2, resign_button_y + button_height / 2))
+    screen.blit(button_text, text_rect)
+    
+    return [resign_button_x, resign_button_y, button_width, button_height]
+
+def button_clicked(mouse_x, mouse_y, button_x, button_y, button_width, button_height):
+    '''
+    Checks if the mouse click is inside resign button
+    '''
+    return button_x <= mouse_x <= button_x + button_width and button_y <= mouse_y <= button_y + button_height
 
 def delete_bottom_bar(screen):
     '''
