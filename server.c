@@ -8,8 +8,8 @@
 #include <errno.h>
 #include <signal.h>
 
-#define DEFAULT_SERVER_IP "127.0.0.1"
-#define DEFAULT_SERVER_PORT 9060
+#include "loadenv.h"
+
 #define MAX_CLIENTS 2
 #define BUFFER_SIZE 4096
 #define RECONNECT_TIMEOUT 60
@@ -22,8 +22,6 @@
 #define MAX_CONNECTION_ATTEMPTS 512
 #define RESTART_GAME_SIGNAL "RSTG\n"
 
-char* server_ip = DEFAULT_SERVER_IP;
-int server_port = DEFAULT_SERVER_PORT;
 
 typedef struct {
     int conn;
@@ -53,25 +51,6 @@ void signal_handler(int signum) {
     server_running = 0;
     cleanup();
     exit(0);
-}
-
-void parse_args(int argc, char *argv[]) {
-    if (argc > 1) {
-        char *arg = strtok(argv[1], ":");
-        if (arg != NULL) {
-            server_ip = arg;
-            arg = strtok(NULL, ":");
-            if (arg != NULL) {
-                server_port = atoi(arg);
-            } else {
-                printf("Usage: %s [ip:port]\n", argv[0]);
-                exit(EXIT_FAILURE);
-            }
-        } else {
-            printf("Usage: %s [ip:port]\n", argv[0]);
-            exit(EXIT_FAILURE);
-        }
-    }
 }
 
 // Read from client until newline character
@@ -278,8 +257,18 @@ void *handle_client(void *arg) {
     return NULL;
 }
 
-int main(int argc, char *argv[]) {
-    parse_args(argc, argv);
+int main() {
+    // Load environment variables from .env file
+    load_env(".env");
+
+    const char *server_ip = getenv("SERVER_IP");
+    const char *server_port_str = getenv("SERVER_PORT");
+    if (server_ip == NULL || server_port_str == NULL) {
+        printf("Environment variables not set, please set up configuration\n");
+        exit(EXIT_FAILURE);
+    }
+
+    const int server_port = atoi(server_port_str);
 
     srand(time(NULL));
     progress = (BackupStorage *)malloc(sizeof(BackupStorage));

@@ -1,5 +1,6 @@
 import pygame
 import sys
+import os
 import socket
 import errno
 import time
@@ -9,6 +10,7 @@ import pickle
 import threading
 from source.movement import *
 from source.board import *
+from dotenv import load_dotenv
 
 SERVER_IP = "localhost"
 SERVER_PORT = 9060
@@ -59,16 +61,16 @@ def get_server_info():
     '''
     get the server IP and port from the user, also set up user id
     '''
-    global SERVER_IP, SERVER_PORT, SERVER_ADDRESS, PLAYER_ID
+    global SERVER_IP, SERVER_PORT, SERVER_ADDRESS
+    load_dotenv()
 
-    ip_input = input(f"Enter server IP (default: {SERVER_IP}): ") or SERVER_IP
-    port_input = input(f"Enter server port (default: {SERVER_PORT}): ") or str(SERVER_PORT)
-    id_input = input("Enter your player ID (default: RANDOM ): ") or ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10))
-
-    SERVER_IP = ip_input
-    SERVER_PORT = int(port_input)
-    SERVER_ADDRESS = (SERVER_IP, SERVER_PORT)
-    PLAYER_ID = id_input
+    SERVER_IP = os.getenv("SERVER_IP")
+    SERVER_PORT = os.getenv("SERVER_PORT")
+    if not SERVER_IP or not SERVER_PORT:
+        print("Enviroment variables not set, please set up configuration")
+        exit(1)
+    else:
+        SERVER_ADDRESS = (SERVER_IP, int(SERVER_PORT))
 
     print(f"Connecting to server at {SERVER_IP}:{SERVER_PORT}...")
 
@@ -143,14 +145,58 @@ def prepare_new_game(sock, player_name, opponent_name):
     pygame.display.flip()
     send_restart_request(sock)
 
+def input_username(screen):
+    '''
+    Get the user ID from the user.
+    @param screen: The screen to display the input box on
+    @return: The user ID
+    '''
+    global SCREEN_WIDTH, SCREEN_HEIGHT
+    input_box = pygame.Rect(SCREEN_WIDTH // 4, SCREEN_HEIGHT // 3, SCREEN_WIDTH // 2, 50)
+    user_id = ""
+    font = pygame.font.Font(None, int(SCREEN_HEIGHT * 0.03))
+    active = True
+
+    while active:
+        # Clear the screen and redraw everything
+        screen.fill((0, 0, 0))  # Clear screen to black
+        text_surface = font.render("Enter your user ID:", True, (255, 255, 255))
+        screen.blit(text_surface, (SCREEN_WIDTH // 4, SCREEN_HEIGHT // 4))  # Display prompt text
+        pygame.draw.rect(screen, (255, 255, 255), input_box, 2)  # Draw the input box
+
+        # Render the typed user ID text inside the box
+        user_text = font.render(user_id, True, (255, 255, 255))
+        screen.blit(user_text, (input_box.x + 5, input_box.y + 5))  # Display entered text
+
+        pygame.display.flip()  # Update the screen with new drawings
+
+        # Handle user input events
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    active = False  # Exit loop when Enter is pressed
+                elif event.key == pygame.K_BACKSPACE:
+                    user_id = user_id[:-1]  # Remove the last character when backspace is pressed
+                else:
+                    if len(user_id) < 20:  # Limit the ID length to 20 characters
+                        user_id += event.unicode  # Add typed character to user ID
+
+    clear_screen(screen)  # Clear screen after input is complete
+    return user_id
+
 def main():
     global screen
     global client_running, game_running
     global selected_piece, possible_moves, color, turn
     global player_score, opponent_score
     global music_button, sound_on
+    global PLAYER_ID
     clear_screen(screen)
-    
+    PLAYER_ID = input_username(screen)
+
     # get the server IP and port from the user
     display_message(screen, "Connecting to server...")
     get_server_info()

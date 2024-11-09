@@ -31,19 +31,11 @@ SERVER_PID=$!
 sleep 1
 
 # Run the Python clients in background
-{
-    echo -e "\n"  # First newline input
-    echo -e "\n"  # Second newline input
-    echo "usr1"   # Actual input for the client
-} | python3 client.py &
+python3 client.py &
 CLIENT1_PID=$!
 sleep 1
 
-{
-    echo -e "\n"  # First newline input
-    echo -e "\n"  # Second newline input
-    echo "usr2"   # Actual input for the client
-} | python3 client.py &
+python3 client.py &
 CLIENT2_PID=$!
 
 # Wait for all background processes to finish
