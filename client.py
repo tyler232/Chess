@@ -11,6 +11,7 @@ import threading
 from source.movement import *
 from source.board import *
 from dotenv import load_dotenv
+from source.ai import make_ai_move
 
 SERVER_IP = "localhost"
 SERVER_PORT = 9060
@@ -26,6 +27,7 @@ color = None
 turn = None
 player_score = 0
 opponent_score = 0
+single_player = False
 
 music_button = None
 sound_on = True
@@ -187,6 +189,142 @@ def input_username(screen):
     clear_screen(screen)  # Clear screen after input is complete
     return user_id
 
+def single_player_mode():
+    '''
+    Run Game in single player
+    '''
+    global turn, player_score, opponent_score, sound_on, screen
+
+    color = "WHITE"
+
+    game_running = True
+    board = [
+        ["br", "bn", "bb", "bq", "bk", "bb", "bn", "br"],
+        ["bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"],
+        ["", "", "", "", "", "", "", ""],
+        ["", "", "", "", "", "", "", ""],
+        ["", "", "", "", "", "", "", ""],
+        ["", "", "", "", "", "", "", ""],
+        ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
+        ["wr", "wn", "wb", "wq", "wk", "wb", "wn", "wr"]
+    ]
+    selected_piece = None
+    possible_moves = []
+    turn = True
+
+    while game_running:
+        music_button = draw_top_bar(screen, "AI", opponent_score, sound_on)
+        draw_board(screen)
+        button_info = draw_bottom_bar(screen, PLAYER_ID, player_score)
+        # check if the player is in check
+        king_loc = find_king(board)
+        last_move = get_last_move()
+        checking = in_check(board, king_loc)
+        enemy_king_loc = find_enemy_king(board)
+        enemy_in_check_status = enemy_in_check(board, enemy_king_loc)
+        
+        if enemy_in_check_status:
+            enemy_king_in_check = True
+        else:
+            enemy_king_in_check = False
+
+        if selected_piece:
+            draw_select_piece(screen, selected_piece, color)
+        if possible_moves:
+            draw_possible_moves(screen, possible_moves, color)
+        if checking:
+            draw_in_check(screen, king_loc, color)
+        elif enemy_king_in_check:
+            draw_in_check(screen, enemy_king_loc, color)
+        
+        if last_move and ((last_move[0][0] == "w" and color == "BLACK") or (last_move and last_move[0][0] == "b" and color == "WHITE")):
+            draw_last_move(last_move, screen, color)
+
+        draw_pieces(screen, color, board)
+
+        if in_checkmate(board, king_loc):
+            print(screen, "Displaying Checkmate message (send end)!")
+            display_message(screen, "YOU LOST")
+            opponent_score += 1
+            break
+        elif in_stalemate(board, king_loc):
+            print(screen, "Displaying Stalemate message (send end)!")
+            display_message(screen, "Stalemate")
+            player_score += 1
+            opponent_score += 1
+            break
+        elif enemy_in_checkmate(board, enemy_king_loc):
+            print(screen, "Displaying Checkmate message (send end)!")
+            display_message(screen, "YOU WIN")
+            player_score += 1
+            break
+        elif enemy_in_stalemate(board, enemy_king_loc):
+            print(screen, "Displaying Stalemate message (send end)!")
+            display_message(screen, "Stalemate")
+            player_score += 1
+            opponent_score += 1
+            break
+        
+        pygame.display.flip()
+
+        if not turn:  # AI's turn
+            # Get AI move
+            print("AI making move")
+            set_current_player("BLACK")
+            ai_moved = make_ai_move(board, screen)
+            set_current_player("WHITE")
+            if ai_moved:
+                turn = True
+                print("AI moved")
+            else:
+                print("AI could not move")
+                break
+            continue
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                pos = pygame.mouse.get_pos()
+                if (pos[0] < BOARD_START_X or pos[0] > BOARD_START_X + BOARD_WIDTH) or (pos[1] < BOARD_START_Y or pos[1] > BOARD_START_Y + BOARD_HEIGHT):
+                        continue
+                col = (pos[0] - BOARD_START_X) // SQUARE_SIZE
+                row = (pos[1] - BOARD_START_Y) // SQUARE_SIZE
+
+                if row < 0 or row >= ROWS:
+                    continue
+                if color == "BLACK":
+                    row = ROWS - 1 - row
+                if selected_piece:
+                    sucess = move_piece(screen, board, possible_moves, selected_piece, (row, col))
+                    if sucess:
+                        piece = board[row][col]
+                        print("Moved piece:", piece)
+                        if sound_on:
+                            sound.play()
+                        turn = False
+                        selected_piece = None
+                        possible_moves = []
+                        continue
+
+                    selected_piece = None
+                    possible_moves = []
+                    
+                else:
+                    piece = board[row][col]
+                    print("Selecting piece at:", (row, col))
+                    if turn and piece and ((piece[0] == "w" and color == "WHITE") or (piece[0] == "b" and color == "BLACK")):
+                        selected_piece = (row, col)
+                        possible_moves = get_possible_moves(board, selected_piece)
+                    elif not turn and piece and ((piece[0] == "w" and color == "WHITE") or (piece[0] == "b" and color == "BLACK")):
+                        print("Not your turn")
+                        request_temp_message(screen, "Not your turn", 1000, color, board)
+        
+
+
+    
+
 def main():
     global screen
     global client_running, game_running
@@ -196,6 +334,10 @@ def main():
     global PLAYER_ID
     clear_screen(screen)
     PLAYER_ID = input_username(screen)
+
+    if single_player:
+        single_player_mode()
+        return
 
     # get the server IP and port from the user
     display_message(screen, "Connecting to server...")

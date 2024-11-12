@@ -1,0 +1,107 @@
+from source.movement import *
+import random
+
+def evaluate_board(board):
+    piece_values = {
+        'p': 1, 'n': 3, 'b': 3, 'r': 5, 'q': 9, 'k': 1000  # Piece values
+    }
+    
+    score = 0
+    
+    for row in board:
+        for piece in row:
+            if piece != "":
+                color = piece[0]  # 'w' or 'b'
+                value = piece_values.get(piece[1], 0)
+                if color == "b":
+                    score += value
+                else:
+                    score -= value
+                    
+    return score
+
+def minimax(board, depth, alpha, beta, is_maximizing_player):
+    # Base case: evaluate if we've reached the desired depth or game-over condition
+    if depth == 0 or game_over(board):
+        return evaluate_board(board)
+
+    if is_maximizing_player:  # AI's turn (maximize score)
+        max_eval = float('-inf')
+        for move in generate_moves(board, "b"):
+            new_board = apply_move(board, move)
+            eval = minimax(new_board, depth-1, alpha, beta, False)
+            max_eval = max(max_eval, eval)
+            alpha = max(alpha, eval)
+            if beta <= alpha:
+                break
+        return max_eval
+    else:  # Opponent's turn (minimize score)
+        min_eval = float('inf')
+        for move in generate_moves(board, "w"):
+            new_board = apply_move(board, move)
+            eval = minimax(new_board, depth-1, alpha, beta, True)
+            min_eval = min(min_eval, eval)
+            beta = min(beta, eval)
+            if beta <= alpha:
+                break
+        return min_eval
+
+def generate_moves(board, color):
+    moves = []
+    for r in range(8):
+        for c in range(8):
+            if board[r][c] != "" and board[r][c][0] == color:  # Piece matches color
+                if color == "w":
+                    set_current_player("WHITE")
+                    possible_moves = get_possible_moves(board, (r, c))
+                else:
+                    set_current_player("BLACK")
+                    possible_moves = get_possible_moves(board, (r, c))
+                set_current_player("BLACK")
+                for move in possible_moves:
+                    moves.append(((r, c), move))  # Store start and end positions
+    return moves
+
+def apply_move(board, move):
+    start_pos, end_pos = move
+    new_board = [row[:] for row in board]  # Create a deep copy of the board
+    piece = new_board[start_pos[0]][start_pos[1]]
+    new_board[start_pos[0]][start_pos[1]] = ""
+    new_board[end_pos[0]][end_pos[1]] = piece
+    return new_board
+
+def ai_move(board, depth=3):
+    best_moves = []
+    max_eval = float('-inf')
+
+    for move in generate_moves(board, "b"):
+        new_board = apply_move(board, move)
+        eval = minimax(new_board, depth-1, float('-inf'), float('inf'), False)
+        
+        if eval > max_eval:
+            max_eval = eval
+            best_moves = [move]  # Start a new list with the current move
+        elif eval == max_eval:
+            best_moves.append(move)  # Add move to the list of best moves with the same score
+
+    # Randomly choose from moves with the highest evaluation
+    best_move = random.choice(best_moves) if best_moves else None
+    return best_move
+
+# Example Usage
+def make_ai_move(board, screen):
+    best_move = ai_move(board, depth=3)
+    if best_move:
+        start_pos, end_pos = best_move
+        return move_piece(screen, board, get_possible_moves(board, start_pos), start_pos, end_pos)
+    return False
+
+def game_over(board):
+    king_loc = find_king(board)
+    if in_checkmate(board, king_loc) or in_stalemate(board, king_loc):
+        return True
+
+    enemy_king_loc = find_enemy_king(board)
+    if enemy_in_checkmate(board, enemy_king_loc) or enemy_in_stalemate(board, enemy_king_loc):
+        return True
+    return False
