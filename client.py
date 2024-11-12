@@ -12,6 +12,7 @@ from source.movement import *
 from source.board import *
 from dotenv import load_dotenv
 from source.ai import make_ai_move
+from source.types import *
 
 SERVER_IP = "localhost"
 SERVER_PORT = 9060
@@ -162,12 +163,12 @@ def input_username(screen):
     while active:
         # Clear the screen and redraw everything
         screen.fill((0, 0, 0))  # Clear screen to black
-        text_surface = font.render("Enter your user ID:", True, (255, 255, 255))
+        text_surface = font.render("Enter your user ID:", True, Color.WHITE.value)
         screen.blit(text_surface, (SCREEN_WIDTH // 4, SCREEN_HEIGHT // 4))  # Display prompt text
-        pygame.draw.rect(screen, (255, 255, 255), input_box, 2)  # Draw the input box
+        pygame.draw.rect(screen, Color.WHITE.value, input_box, 2)  # Draw the input box
 
         # Render the typed user ID text inside the box
-        user_text = font.render(user_id, True, (255, 255, 255))
+        user_text = font.render(user_id, True, Color.WHITE.value)
         screen.blit(user_text, (input_box.x + 5, input_box.y + 5))  # Display entered text
 
         pygame.display.flip()  # Update the screen with new drawings
@@ -195,7 +196,7 @@ def single_player_mode():
     '''
     global turn, player_score, opponent_score, sound_on, screen
 
-    color = "WHITE"
+    player = Player.WHITE
 
     game_running = True
     board = [
@@ -229,18 +230,18 @@ def single_player_mode():
             enemy_king_in_check = False
 
         if selected_piece:
-            draw_select_piece(screen, selected_piece, color)
+            draw_select_piece(screen, selected_piece, player)
         if possible_moves:
-            draw_possible_moves(screen, possible_moves, color)
+            draw_possible_moves(screen, possible_moves, player)
         if checking:
-            draw_in_check(screen, king_loc, color)
+            draw_in_check(screen, king_loc, player)
         elif enemy_king_in_check:
-            draw_in_check(screen, enemy_king_loc, color)
+            draw_in_check(screen, enemy_king_loc, player)
         
-        if last_move and ((last_move[0][0] == "w" and color == "BLACK") or (last_move and last_move[0][0] == "b" and color == "WHITE")):
-            draw_last_move(last_move, screen, color)
+        if last_move and ((last_move[0][0] == "w" and player == Player.BLACK) or (last_move and last_move[0][0] == "b" and player == Player.WHITE)):
+            draw_last_move(last_move, screen, player)
 
-        draw_pieces(screen, color, board)
+        draw_pieces(screen, player, board)
 
         if in_checkmate(board, king_loc):
             print(screen, "Displaying Checkmate message (send end)!")
@@ -267,19 +268,17 @@ def single_player_mode():
         
         pygame.display.flip()
 
-        if not turn:  # AI's turn
+        while not turn:  # AI's turn
             # Get AI move
             print("AI making move")
-            set_current_player("BLACK")
+            set_current_player(Player.BLACK)
             ai_moved = make_ai_move(board, screen)
-            set_current_player("WHITE")
+            set_current_player(Player.WHITE)
             if ai_moved:
                 turn = True
                 print("AI moved")
             else:
                 print("AI could not move")
-                time.sleep(10000) # not sure what will happen here, lock the screen to figure it out
-            continue
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -294,7 +293,7 @@ def single_player_mode():
 
                 if row < 0 or row >= ROWS:
                     continue
-                if color == "BLACK":
+                if player == Player.BLACK:
                     row = ROWS - 1 - row
                 if selected_piece:
                     sucess = move_piece(screen, board, possible_moves, selected_piece, (row, col))
@@ -314,12 +313,12 @@ def single_player_mode():
                 else:
                     piece = board[row][col]
                     print("Selecting piece at:", (row, col))
-                    if turn and piece and ((piece[0] == "w" and color == "WHITE") or (piece[0] == "b" and color == "BLACK")):
+                    if turn and piece and ((piece[0] == "w" and player == Player.WHITE) or (piece[0] == "b" and player == Player.BLACK)):
                         selected_piece = (row, col)
                         possible_moves = get_possible_moves(board, selected_piece)
-                    elif not turn and piece and ((piece[0] == "w" and color == "WHITE") or (piece[0] == "b" and color == "BLACK")):
+                    elif not turn and piece and ((piece[0] == "w" and player == Player.WHITE) or (piece[0] == "b" and player == Player.BLACK)):
                         print("Not your turn")
-                        request_temp_message(screen, "Not your turn", 1000, color, board)
+                        request_temp_message(screen, "Not your turn", 1000, player, board)
         
 
 
@@ -332,6 +331,9 @@ def main():
     global player_score, opponent_score
     global music_button, sound_on
     global PLAYER_ID
+
+    player = None
+
     clear_screen(screen)
     PLAYER_ID = input_username(screen)
 
@@ -375,14 +377,23 @@ def main():
     receive_color(sock)
     clear_screen(screen)
     display_message(screen, "You are " + color)
-    set_current_player(color)
+
+    if color == "WHITE":
+        player = Player.WHITE
+    elif color == "BLACK":
+        player = Player.BLACK
+    else:
+        print("Invalid color received from server")
+        exit(1)
+
+    set_current_player(player)
 
     # Receive the opponent's name from the server
     opponent_name = read_until_nl(sock)
     player_name = PLAYER_ID
     
     # set up first hand
-    if color == "WHITE":
+    if player == Player.WHITE:
         turn = True
 
     while client_running:
@@ -425,18 +436,18 @@ def main():
                 enemy_king_in_check = False
 
             if selected_piece:
-                draw_select_piece(screen, selected_piece, color)
+                draw_select_piece(screen, selected_piece, player)
             if possible_moves:
-                draw_possible_moves(screen, possible_moves, color)
+                draw_possible_moves(screen, possible_moves, player)
             if checking:
-                draw_in_check(screen, king_loc, color)
+                draw_in_check(screen, king_loc, player)
             elif enemy_king_in_check:
-                draw_in_check(screen, enemy_king_loc, color)
+                draw_in_check(screen, enemy_king_loc, player)
             
-            if last_move and ((last_move[0][0] == "w" and color == "BLACK") or (last_move and last_move[0][0] == "b" and color == "WHITE")):
-                draw_last_move(last_move, screen, color)
+            if last_move and ((last_move[0][0] == "w" and player == Player.BLACK) or (last_move and last_move[0][0] == "b" and player == Player.WHITE)):
+                draw_last_move(last_move, screen, player)
 
-            draw_pieces(screen, color, board)
+            draw_pieces(screen, player, board)
 
             if in_checkmate(board, king_loc):
                 print(screen, "Displaying Checkmate message (send end)!")
@@ -501,7 +512,7 @@ def main():
                         if button_clicked(pos[0], pos[1], button_info[0], button_info[1], button_info[4], button_info[5]):
                             print("Resign Button clicked")
                             if not turn:
-                                display_temp_message(screen, "Not your turn", 1000, color, board)
+                                display_temp_message(screen, "Not your turn", 1000, player, board)
                                 continue
                             else:
                                 if not draw_confirm_window(screen, "Are you sure you want to resign?"):
@@ -523,7 +534,7 @@ def main():
                         elif button_clicked(pos[0], pos[1], button_info[2], button_info[3], button_info[4], button_info[5]):
                             print("Draw Button clicked")
                             if not turn:
-                                display_temp_message(screen, "Not your turn", 1000, color, board)
+                                display_temp_message(screen, "Not your turn", 1000, player, board)
                                 continue
                             else:
                                 if not draw_confirm_window(screen, "Are you sure you want to offer a draw?"):
@@ -544,7 +555,7 @@ def main():
 
                     if row < 0 or row >= ROWS:
                         continue
-                    if color == "BLACK":
+                    if player == Player.BLACK:
                         row = ROWS - 1 - row
                     if selected_piece:
                         sucess = move_piece(screen, board, possible_moves, selected_piece, (row, col))
@@ -567,12 +578,12 @@ def main():
                     else:
                         piece = board[row][col]
                         print("Selecting piece at:", (row, col))
-                        if turn and piece and ((piece[0] == "w" and color == "WHITE") or (piece[0] == "b" and color == "BLACK")):
+                        if turn and piece and ((piece[0] == "w" and player == Player.WHITE) or (piece[0] == "b" and player == Player.BLACK)):
                             selected_piece = (row, col)
                             possible_moves = get_possible_moves(board, selected_piece)
-                        elif not turn and piece and ((piece[0] == "w" and color == "WHITE") or (piece[0] == "b" and color == "BLACK")):
+                        elif not turn and piece and ((piece[0] == "w" and player == Player.WHITE) or (piece[0] == "b" and player == Player.BLACK)):
                             print("Not your turn")
-                            request_temp_message(screen, "Not your turn", 1000, color, board)
+                            request_temp_message(screen, "Not your turn", 1000, player, board)
 
             # Check if there are any moves in the queue from the server
             while move_queue:
@@ -611,7 +622,7 @@ def main():
                         break
                     board = move["board"]
                     print("NEW BOARD:", board)
-                    draw_pieces(screen, color, board)
+                    draw_pieces(screen, player, board)
                     update_lastmove((move["piece"], move["from"], move["to"]))
                     if sound_on:
                         sound.play()
@@ -624,10 +635,9 @@ def main():
         print("Game ended, New game starting...")
 
         # reset color and priority for next game
-        new_color = "WHITE" if color == "BLACK" else "BLACK"
-        color = new_color
-        set_current_player(color)
-        turn = True if color == "WHITE" else False
+        player = Player.WHITE if player == Player.BLACK else Player.BLACK
+        set_current_player(player)
+        turn = True if player == Player.WHITE else False
 
         # wait 5 seconds until start next game
         time.sleep(5)

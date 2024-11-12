@@ -1,5 +1,8 @@
 from source.movement import *
+from source.types import *
 import random
+
+transposition_cache = {}
 
 def evaluate_board(board):
     piece_values = {
@@ -22,8 +25,14 @@ def evaluate_board(board):
 
 def minimax(board, depth, alpha, beta, is_maximizing_player):
     # Base case: evaluate if we've reached the desired depth or game-over condition
+    board_hash = hash(str(board))  # Create a unique hash of the board position
+    if board_hash in transposition_cache:
+        return transposition_cache[board_hash]
+
     if depth == 0 or game_over(board):
-        return evaluate_board(board)
+        evaluation = evaluate_board(board)
+        transposition_cache[board_hash] = evaluation
+        return evaluation
 
     if is_maximizing_player:  # AI's turn (maximize score)
         max_eval = float('-inf')
@@ -52,14 +61,15 @@ def generate_moves(board, color):
         for c in range(8):
             if board[r][c] != "" and board[r][c][0] == color:  # Piece matches color
                 if color == "w":
-                    set_current_player("WHITE")
+                    set_current_player(Player.WHITE)
                     possible_moves = get_possible_moves(board, (r, c))
                 else:
-                    set_current_player("BLACK")
+                    set_current_player(Player.BLACK)
                     possible_moves = get_possible_moves(board, (r, c))
-                set_current_player("BLACK")
+                set_current_player(Player.BLACK)
                 for move in possible_moves:
-                    moves.append(((r, c), move))  # Store start and end positions
+                    if not in_check(board, color):
+                        moves.append(((r, c), move))  # Store start and end positions
     return moves
 
 def apply_move(board, move):
@@ -95,6 +105,7 @@ def ai_move(board, depth=3):
 # Example Usage
 def make_ai_move(board, screen):
     best_move = ai_move(board, depth=3)
+    print("AI's best move:", best_move)
     if best_move:
         start_pos, end_pos = best_move
         return move_piece(screen, board, get_possible_moves(board, start_pos), start_pos, end_pos, ai=True)

@@ -1,12 +1,23 @@
 import copy
 from source.board import promotion_selection, display_temp_message
+from source.types import *
 
-current_player = "w"
+current_player: Player = Player.WHITE
 last_move = None
 en_passant_location = None
 test_mode = False
 
 def move_piece(screen, board, possible_moves, selected_piece, end_pos, ai=False):
+    '''
+    Move the selected piece to the end position if it is a valid move
+    @param screen: pygame screen
+    @param board: 2D list of strings representing the board
+    @param possible_moves: list of tuples representing possible moves
+    @param selected_piece: tuple representing the selected piece
+    @param end_pos: tuple representing the end position
+    @param ai: boolean representing if the move is made by the AI
+    @return: boolean representing if the move was successful
+    '''
     global last_move
     global current_player
     global en_passant_location
@@ -41,8 +52,7 @@ def move_piece(screen, board, possible_moves, selected_piece, end_pos, ai=False)
                 swap_players()
             sucess = True
         else:
-            color = "WHITE" if current_player == "w" else "BLACK"
-            display_temp_message(screen, "Check", 1000, color, board)
+            display_temp_message(screen, "Check", 1000, current_player, board)
     elif piece == "wk" and is_valid_move(board, possible_moves, end_pos) and can_castle(board, selected_piece, end_pos) == 2:
         copy_board[start_row][start_col] = ""
         copy_board[end_row][end_col] = piece
@@ -59,8 +69,7 @@ def move_piece(screen, board, possible_moves, selected_piece, end_pos, ai=False)
                 swap_players()
             sucess = True
         else:
-            color = "WHITE" if current_player == "w" else "BLACK"
-            display_temp_message(screen, "Check", 1000, color, board)
+            display_temp_message(screen, "Check", 1000, current_player, board)
     elif piece == "bk" and is_valid_move(board, possible_moves, end_pos) and can_castle(board, selected_piece, end_pos) == 1:
         copy_board[start_row][start_col] = ""
         copy_board[end_row][end_col] = piece
@@ -77,8 +86,7 @@ def move_piece(screen, board, possible_moves, selected_piece, end_pos, ai=False)
                 swap_players()
             sucess = True
         else:
-            color = "WHITE" if current_player == "w" else "BLACK"
-            display_temp_message(screen, "Check", 1000, color, board)
+            display_temp_message(screen, "Check", 1000, current_player, board)
     elif piece == "bk" and is_valid_move(board, possible_moves, end_pos) and can_castle(board, selected_piece, end_pos) == 2:
         copy_board[start_row][start_col] = ""
         copy_board[end_row][end_col] = piece
@@ -95,8 +103,7 @@ def move_piece(screen, board, possible_moves, selected_piece, end_pos, ai=False)
                 swap_players()
             sucess = True
         else:
-            color = "WHITE" if current_player == "w" else "BLACK"
-            display_temp_message(screen, "Check", 1000, color, board)
+            display_temp_message(screen, "Check", 1000, current_player, board)
     # Pawn Promotion
     elif is_valid_move(board, possible_moves, end_pos) and piece == "wp" and end_row == 0:
         copy_board[start_row][start_col] = ""
@@ -111,8 +118,7 @@ def move_piece(screen, board, possible_moves, selected_piece, end_pos, ai=False)
                 swap_players()
             sucess = True
         else:
-            color = "WHITE" if current_player == "w" else "BLACK"
-            display_temp_message(screen, "Check", 1000, color, board)
+            display_temp_message(screen, "Check", 1000, current_player, board)
     elif is_valid_move(board, possible_moves, end_pos) and piece == "bp" and end_row == 7:
         copy_board[start_row][start_col] = ""
         copy_board[end_row][end_col] = piece
@@ -126,8 +132,7 @@ def move_piece(screen, board, possible_moves, selected_piece, end_pos, ai=False)
                 swap_players()
             sucess = True
         else:
-            color = "WHITE" if current_player == "w" else "BLACK"
-            display_temp_message(screen, "Check", 1000, color, board)
+            display_temp_message(screen, "Check", 1000, current_player, board)
     # En passant
     elif is_valid_move(board, possible_moves, end_pos) and en_passant_location and end_pos == en_passant_location:
         print("Doing En passant")
@@ -151,8 +156,7 @@ def move_piece(screen, board, possible_moves, selected_piece, end_pos, ai=False)
                 swap_players()
             sucess = True
         else:
-            color = "WHITE" if current_player == "w" else "BLACK"
-            display_temp_message(screen, "Check", 1000, color, board)
+            display_temp_message(screen, "Check", 1000, current_player, board)
     # Regular move
     elif is_valid_move(board, possible_moves, end_pos):
         copy_board[start_row][start_col] = ""
@@ -166,8 +170,7 @@ def move_piece(screen, board, possible_moves, selected_piece, end_pos, ai=False)
                 swap_players()
             sucess = True
         else:
-            color = "WHITE" if current_player == "w" else "BLACK"
-            display_temp_message(screen, "Check", 1000, color, board)
+            display_temp_message(screen, "Check", 1000, current_player, board)
     
     print("Last Move: ", last_move)
 
@@ -218,7 +221,7 @@ def get_possible_moves_all_players(board, selected_piece):
 
 def get_possible_moves(board, selected_piece):
     piece = board[selected_piece[0]][selected_piece[1]]
-    if not piece or piece[0] != current_player:
+    if not piece or piece[0] != current_player.value:
         return []
 
     return get_possible_moves_all_players(board, selected_piece)
@@ -456,18 +459,17 @@ def possible_moves_king(board, selected_piece, color):
 
     return possible
 
-
 def find_king(board):
     for row_idx in range(len(board)):
         for col_idx in range(len(board[row_idx])):
-            if board[row_idx][col_idx] == f"{current_player}k":
+            if board[row_idx][col_idx] == f"{current_player.value}k":
                 return (row_idx, col_idx)
     return None
 
 def find_enemy_king(board):
     for row_idx in range(len(board)):
         for col_idx in range(len(board[row_idx])):
-            if board[row_idx][col_idx] == f"{'b' if current_player == 'w' else 'w'}k":
+            if board[row_idx][col_idx] == f"{'b' if current_player == Player.WHITE else 'w'}k":
                 return (row_idx, col_idx)
     return None
 
@@ -475,7 +477,7 @@ def in_check(board, king_location):
     for row_idx in range(len(board)):
         for col_idx in range(len(board[row_idx])):
             piece = board[row_idx][col_idx]
-            if piece != "" and piece[0] != current_player:
+            if piece != "" and piece[0] != current_player.value:
                 possible_moves = get_possible_moves_all_players(board, (row_idx, col_idx))
                 if king_location in possible_moves:
                     return True
@@ -485,7 +487,7 @@ def enemy_in_check(board, enemy_king_location):
     for row_idx in range(len(board)):
         for col_idx in range(len(board[row_idx])):
             piece = board[row_idx][col_idx]
-            if piece != "" and piece[0] == current_player:
+            if piece != "" and piece[0] == current_player.value:
                 possible_moves = get_possible_moves_all_players(board, (row_idx, col_idx))
                 if enemy_king_location in possible_moves:
                     return True
@@ -499,7 +501,7 @@ def in_checkmate(board, king_location):
     for row_idx in range(len(board)):
         for col_idx in range(len(board[row_idx])):
             piece = board[row_idx][col_idx]
-            if piece != "" and piece[0] == current_player:
+            if piece != "" and piece[0] == current_player.value:
                 possible_moves = get_possible_moves_all_players(board, (row_idx, col_idx))
                 for move in possible_moves:
                     copy_board = copy.deepcopy(board)
@@ -517,7 +519,7 @@ def enemy_in_checkmate(board, enemy_king_location):
     for row_idx in range(len(board)):
         for col_idx in range(len(board[row_idx])):
             piece = board[row_idx][col_idx]
-            if piece != "" and piece[0] != current_player:
+            if piece != "" and piece[0] != current_player.value:
                 possible_moves = get_possible_moves_all_players(board, (row_idx, col_idx))
                 for move in possible_moves:
                     copy_board = copy.deepcopy(board)
@@ -537,7 +539,7 @@ def in_stalemate(board, king_location):
     for row_idx in range(len(board)):
         for col_idx in range(len(board[row_idx])):
             piece = board[row_idx][col_idx]
-            if piece != "" and piece[0] == current_player:
+            if piece != "" and piece[0] == current_player.value:
                 possible_moves = get_possible_moves_all_players(board, (row_idx, col_idx))
                 for move in possible_moves:
                     copy_board = copy.deepcopy(board)
@@ -554,7 +556,7 @@ def enemy_in_stalemate(board, enemy_king_location):
     for row_idx in range(len(board)):
         for col_idx in range(len(board[row_idx])):
             piece = board[row_idx][col_idx]
-            if piece != "" and piece[0] != current_player:
+            if piece != "" and piece[0] != current_player.value:
                 possible_moves = get_possible_moves_all_players(board, (row_idx, col_idx))
                 for move in possible_moves:
                     copy_board = copy.deepcopy(board)
@@ -571,10 +573,7 @@ def set_test_mode(test):
 
 def set_current_player(player):
     global current_player
-    if player == "WHITE":
-        current_player = "w"
-    elif player == "BLACK":
-        current_player = "b"
+    current_player = player
 
 def get_last_move():
     return last_move
@@ -585,5 +584,5 @@ def update_lastmove(move):
 
 def swap_players():
     global current_player
-    current_player = "w" if current_player == "b" else "b"
+    current_player = Player.WHITE if current_player == Player.BLACK else Player.BLACK
     return current_player

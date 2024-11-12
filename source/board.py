@@ -1,5 +1,6 @@
 import pygame
 import time
+from source.types import *
 
 SCREEN_WIDTH, SCREEN_HEIGHT = 900, 900
 BOARD_WIDTH, BOARD_HEIGHT = int(SCREEN_WIDTH * 0.84), int(SCREEN_HEIGHT * 0.84)
@@ -8,15 +9,6 @@ ROWS, COLS = 8, 8
 SQUARE_SIZE = BOARD_WIDTH // COLS
 BOARD_START_X = (SCREEN_WIDTH - BOARD_WIDTH) // 2
 BOARD_START_Y = (SCREEN_HEIGHT - BOARD_HEIGHT) // 2
-
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-BROWN = (139, 69, 19)
-LIGHT_BROWN = (245, 222, 179)
-GREEN = (0, 255, 0)
-GRAY = (200, 200, 200)
-RED = (255, 0, 0)
-YELLOW = (255, 255, 0)
 
 PIECES = {
     "wp": pygame.image.load("assets/wp.png"),  # white pawn
@@ -46,7 +38,7 @@ def draw_mode_selection(screen):
     font = pygame.font.Font(None, int(SCREEN_HEIGHT * 0.05))
     
     # Draw the title
-    title_text = font.render("Select Game Mode", True, WHITE)
+    title_text = font.render("Select Game Mode", True, Color.WHITE.value)
     title_text_rect = title_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 4))
     screen.blit(title_text, title_text_rect)
 
@@ -60,13 +52,13 @@ def draw_mode_selection(screen):
     single_mode_button = pygame.Rect(single_mode_button_x, single_mode_button_y, button_width, button_height)
     multi_mode_button = pygame.Rect(multi_mode_button_x, multi_mode_button_y, button_width, button_height)
 
-    pygame.draw.rect(screen, LIGHT_BROWN, single_mode_button)
-    pygame.draw.rect(screen, BROWN, multi_mode_button)
+    pygame.draw.rect(screen, Color.LIGHT_BROWN.value, single_mode_button)
+    pygame.draw.rect(screen, Color.BROWN.value, multi_mode_button)
 
     # Button text
     button_font = pygame.font.Font(None, int(SCREEN_HEIGHT * 0.04))
-    single_text = button_font.render("Single Player", True, WHITE)
-    multi_text = button_font.render("Multiplayer", True, WHITE)
+    single_text = button_font.render("Single Player", True, Color.WHITE.value)
+    multi_text = button_font.render("Multiplayer", True, Color.WHITE.value)
 
     # Position text at the center of each button
     single_text_rect = single_text.get_rect(center=single_mode_button.center)
@@ -76,6 +68,7 @@ def draw_mode_selection(screen):
     screen.blit(single_text, single_text_rect)
     screen.blit(multi_text, multi_text_rect)
 
+    # Selection
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -102,9 +95,9 @@ def draw_top_bar(screen, opponent_name, score, sound_on):
     '''
     font_size = int(BAR_HEIGHT * 0.4)
     font = pygame.font.Font(None, font_size)
-    text = font.render(f"Opponent: {opponent_name}", True, WHITE)
+    text = font.render(f"Opponent: {opponent_name}", True, Color.WHITE.value)
     screen.blit(text, (10, 10))
-    score_text = font.render(f"Score: {score}", True, WHITE)
+    score_text = font.render(f"Score: {score}", True, Color.WHITE.value)
     screen.blit(score_text, (10, 10 + font_size))
 
     music_icon = pygame.image.load("assets/music_icon.png").convert_alpha()
@@ -119,8 +112,8 @@ def draw_top_bar(screen, opponent_name, score, sound_on):
 
     if not sound_on:
         line_thickness = 3
-        pygame.draw.line(screen, RED, (icon_x, icon_y), (icon_x + icon_size, icon_y + icon_size), line_thickness)
-        pygame.draw.line(screen, RED, (icon_x + icon_size, icon_y), (icon_x, icon_y + icon_size), line_thickness)
+        pygame.draw.line(screen, Color.RED.value, (icon_x, icon_y), (icon_x + icon_size, icon_y + icon_size), line_thickness)
+        pygame.draw.line(screen, Color.RED.value, (icon_x + icon_size, icon_y), (icon_x, icon_y + icon_size), line_thickness)
     
     return music_icon_rect
 
@@ -129,7 +122,7 @@ def delete_top_bar(screen):
     '''
     Delete the top bar
     '''
-    pygame.draw.rect(screen, BLACK, (0, 0, BOARD_WIDTH, BAR_HEIGHT))
+    pygame.draw.rect(screen, Color.BLACK.value, (0, 0, BOARD_WIDTH, BAR_HEIGHT))
 
 def draw_bottom_bar(screen, player_name, score):
     '''
@@ -138,9 +131,9 @@ def draw_bottom_bar(screen, player_name, score):
     # Draw the info text
     font_size = int(BAR_HEIGHT * 0.4)
     font = pygame.font.Font(None, font_size)
-    text = font.render(f"Player: {player_name}", True, WHITE)
+    text = font.render(f"Player: {player_name}", True, Color.WHITE.value)
     screen.blit(text, (10, BOARD_HEIGHT + BAR_HEIGHT))
-    score_text = font.render(f"Score: {score}", True, WHITE)
+    score_text = font.render(f"Score: {score}", True, Color.WHITE.value)
     screen.blit(score_text, (10, BOARD_HEIGHT + BAR_HEIGHT + 36))
 
     # Draw resign button
@@ -148,20 +141,20 @@ def draw_bottom_bar(screen, player_name, score):
     button_height = int(BAR_HEIGHT * 0.6)
     resign_button_x = int(SCREEN_WIDTH * 0.85) - button_width
     resign_button_y = BOARD_HEIGHT + BAR_HEIGHT + int(BAR_HEIGHT * 0.2)
-    pygame.draw.rect(screen, RED, (resign_button_x, resign_button_y, button_width, button_height))
+    pygame.draw.rect(screen, Color.RED.value, (resign_button_x, resign_button_y, button_width, button_height))
 
     # Draw Draw button
     draw_button_x = int(SCREEN_WIDTH * 0.80) - (2 * button_width)
     draw_button_y = resign_button_y
-    pygame.draw.rect(screen, YELLOW, (draw_button_x, draw_button_y, button_width, button_height))
+    pygame.draw.rect(screen, Color.YELLOW.value, (draw_button_x, draw_button_y, button_width, button_height))
     
     # Draw resign button text
-    button_text = font.render("Resign", True, WHITE)
+    button_text = font.render("Resign", True, Color.WHITE.value)
     text_rect = button_text.get_rect(center=(resign_button_x + button_width / 2, resign_button_y + button_height / 2))
     screen.blit(button_text, text_rect)
 
     # Draw stalemate button text
-    button_text = font.render("Draw", True, BLACK)
+    button_text = font.render("Draw", True, Color.BLACK.value)
     text_rect = button_text.get_rect(center=(draw_button_x + button_width / 2, draw_button_y + button_height / 2)) 
     screen.blit(button_text, text_rect)
 
@@ -177,7 +170,7 @@ def delete_bottom_bar(screen):
     '''
     Delete the bottom bar
     '''
-    pygame.draw.rect(screen, BLACK, (0, BOARD_HEIGHT + BAR_HEIGHT, BOARD_WIDTH, BAR_HEIGHT))
+    pygame.draw.rect(screen, Color.BLACK.value, (0, BOARD_HEIGHT + BAR_HEIGHT, BOARD_WIDTH, BAR_HEIGHT))
     
 def draw_board(screen):
     '''
@@ -188,34 +181,34 @@ def draw_board(screen):
     board_start_y = (SCREEN_HEIGHT - BOARD_HEIGHT) // 2
     for row in range(ROWS):
         for col in range(COLS):
-            color = LIGHT_BROWN if (row + col) % 2 == 0 else BROWN
+            color = Color.LIGHT_BROWN.value if (row + col) % 2 == 0 else Color.BROWN.value
             pygame.draw.rect(screen, color, (board_start_x + col * SQUARE_SIZE, board_start_y + row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
 
-def draw_select_piece(screen, selected_piece, player_color):
+def draw_select_piece(screen, selected_piece, player):
     '''
     draw a green square around the selected piece
     '''
-    if player_color == "BLACK":
+    if player == Player.BLACK:
         row = ROWS - 1 - selected_piece[0]  # Reverse the row for Black
         col = selected_piece[1]
     else:
         row, col = selected_piece
 
-    pygame.draw.rect(screen, GREEN, (BOARD_START_X + col * SQUARE_SIZE, BOARD_START_Y + row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+    pygame.draw.rect(screen, Color.GREEN.value, (BOARD_START_X + col * SQUARE_SIZE, BOARD_START_Y + row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
 
-def draw_possible_moves(screen, possible_moves, player_color):
+def draw_possible_moves(screen, possible_moves, player):
     '''
     Draw green squares around the possible moves
     '''
     for move in possible_moves:
-        if player_color == "BLACK":
+        if player == Player.BLACK:
             row = ROWS - 1 - move[0]  # Reverse the row for Black
             col = move[1]
         else:
             row, col = move
-        pygame.draw.rect(screen, GREEN, (BOARD_START_X + col * SQUARE_SIZE, BOARD_START_Y + row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+        pygame.draw.rect(screen, Color.GREEN.value, (BOARD_START_X + col * SQUARE_SIZE, BOARD_START_Y + row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
 
-def draw_pieces(screen, player_color, board):
+def draw_pieces(screen, player, board):
     '''
     draw pieces on board
     '''
@@ -223,24 +216,24 @@ def draw_pieces(screen, player_color, board):
         for col in range(COLS):
             piece = board[row][col]
             if piece != "":
-                if player_color == "WHITE":
+                if player == Player.WHITE:
                     screen.blit(PIECES[piece], (BOARD_START_X + col * SQUARE_SIZE, BOARD_START_Y + row * SQUARE_SIZE))
-                elif player_color == "BLACK":
+                elif player == Player.BLACK:
                     screen.blit(PIECES[piece], (BOARD_START_X + col * SQUARE_SIZE, BOARD_START_Y + (ROWS - 1 - row) * SQUARE_SIZE))
 
-def draw_in_check(screen, king_loc, player_color):
+def draw_in_check(screen, king_loc, player):
     '''
     draw a red square around the king if in check
     '''
-    if player_color == "BLACK":
+    if player == Player.BLACK:
         row = ROWS - 1 - king_loc[0]
         col = king_loc[1]
     else:
         row, col = king_loc
 
-    pygame.draw.rect(screen, RED, (BOARD_START_X + col * SQUARE_SIZE, BOARD_START_Y + row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+    pygame.draw.rect(screen, Color.RED.value, (BOARD_START_X + col * SQUARE_SIZE, BOARD_START_Y + row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
 
-def draw_last_move(last_move, screen, player_color):
+def draw_last_move(last_move, screen, player):
     '''
     draw a yellow outer layer around the last move
     '''
@@ -249,7 +242,6 @@ def draw_last_move(last_move, screen, player_color):
     
     last_move_from = last_move[1]  # Starting position of the move (row, col)
     last_move_to = last_move[2]    # Ending position of the move (row, col)
-    color = (255, 255, 0)  # Yellow color for highlighting
 
     # Yellow border for the 'from' square
     from_x = BOARD_START_X + last_move_from[1] * SQUARE_SIZE
@@ -259,25 +251,25 @@ def draw_last_move(last_move, screen, player_color):
     to_x = BOARD_START_X + last_move_to[1] * SQUARE_SIZE
     to_y = BOARD_START_Y + last_move_to[0] * SQUARE_SIZE
 
-    if player_color == "BLACK":
+    if player == Player.BLACK:
         from_y = BOARD_START_Y + (ROWS - 1 - last_move_from[0]) * SQUARE_SIZE
         to_y = BOARD_START_Y + (ROWS - 1 - last_move_to[0]) * SQUARE_SIZE
 
-    pygame.draw.rect(screen, color, (to_x, to_y, SQUARE_SIZE, SQUARE_SIZE), 5)
-    pygame.draw.rect(screen, color, (from_x, from_y, SQUARE_SIZE, SQUARE_SIZE), 5)
+    pygame.draw.rect(screen, Color.YELLOW.value, (to_x, to_y, SQUARE_SIZE, SQUARE_SIZE), 5)
+    pygame.draw.rect(screen, Color.YELLOW.value, (from_x, from_y, SQUARE_SIZE, SQUARE_SIZE), 5)
 
 
-def promotion_selection(player_color):
+def promotion_selection(screen, player):
     '''
     promotion selection screen and return the selected piece of which the pawn will be promoted to
     '''
     font = pygame.font.Font(None, 36)
     options = ["q", "r", "b", "n"]  # The promotion options (Queen, Rook, Bishop, Knight)
     piece_images = {
-        "q": pygame.image.load("assets/wq.png" if player_color == "WHITE" else "assets/bq.png"),
-        "r": pygame.image.load("assets/wr.png" if player_color == "WHITE" else "assets/br.png"),
-        "b": pygame.image.load("assets/wb.png" if player_color == "WHITE" else "assets/bb.png"),
-        "n": pygame.image.load("assets/wn.png" if player_color == "WHITE" else "assets/bn.png"),
+        "q": pygame.image.load("assets/wq.png" if player == Player.WHITE else "assets/bq.png"),
+        "r": pygame.image.load("assets/wr.png" if player == Player.WHITE else "assets/br.png"),
+        "b": pygame.image.load("assets/wb.png" if player == Player.WHITE else "assets/bb.png"),
+        "n": pygame.image.load("assets/wn.png" if player == Player.WHITE else "assets/bn.png"),
     }
 
     selected_piece = None
@@ -290,7 +282,7 @@ def promotion_selection(player_color):
 
     # Draw the selection box
     pygame.draw.rect(screen, (0, 0, 0), (box_x, box_y, box_width, box_height))
-    pygame.draw.rect(screen, BROWN, (box_x + 5, box_y + 5, box_width - 10, box_height - 10))  # Inner white box
+    pygame.draw.rect(screen, Color.BROWN.value, (box_x + 5, box_y + 5, box_width - 10, box_height - 10))  # Inner white box
 
     title_text = font.render("Promote to:", True, (255, 0, 0))
     screen.blit(title_text, (box_x + 10, box_y + 10))
@@ -350,12 +342,12 @@ def draw_confirm_window(screen, text):
     window_height = int(SCREEN_HEIGHT * 0.3)
     window_x = (SCREEN_WIDTH - window_width) // 2
     window_y = (SCREEN_HEIGHT - window_height) // 2
-    pygame.draw.rect(screen, GRAY, (window_x, window_y, window_width, window_height))
-    pygame.draw.rect(screen, BLACK, (window_x, window_y, window_width, window_height), 2)
+    pygame.draw.rect(screen, Color.GRAY.value, (window_x, window_y, window_width, window_height))
+    pygame.draw.rect(screen, Color.BLACK.value, (window_x, window_y, window_width, window_height), 2)
 
     # Confirmation text
     font = pygame.font.Font(None, int(SCREEN_HEIGHT * 0.03))
-    text = font.render(text, True, BLACK)
+    text = font.render(text, True, Color.BLACK.value)
     screen.blit(text, (window_x + int(SCREEN_HEIGHT * 0.05), window_y + int(SCREEN_HEIGHT * 0.08)))
 
     # Draw "Yes" button
@@ -365,16 +357,16 @@ def draw_confirm_window(screen, text):
     yes_button_x = window_x + int(window_width * 0.1)
     yes_button_y = window_y + int(window_height * 0.55)
     yes_button = pygame.Rect(yes_button_x, yes_button_y, confirm_button_width, confirm_button_height)
-    pygame.draw.rect(screen, RED, yes_button)
-    yes_text = font.render("Yes", True, WHITE)
+    pygame.draw.rect(screen, Color.RED.value, yes_button)
+    yes_text = font.render("Yes", True, Color.WHITE.value)
     screen.blit(yes_text, (yes_button_x + confirm_button_width // 3, yes_button_y + confirm_button_height // 6))
 
     # Draw "No" button
     no_button_x = window_x + int(window_width * 0.65)
     no_button_y = yes_button_y
     no_button = pygame.Rect(no_button_x, no_button_y, confirm_button_width, confirm_button_height)
-    pygame.draw.rect(screen, RED, no_button)
-    no_text = font.render("No", True, WHITE)
+    pygame.draw.rect(screen, Color.RED.value, no_button)
+    no_text = font.render("No", True, Color.WHITE.value)
     screen.blit(no_text, (no_button_x + confirm_button_width // 3, no_button_y + confirm_button_height // 6))
 
 
@@ -416,7 +408,7 @@ def display_message(screen, message):
     pygame.display.flip()
     pygame.time.wait(2000)
 
-def display_temp_message(screen, message, duration, player_color, board):
+def display_temp_message(screen, message, duration, player, board):
     '''
     Display a temporary message centered on the board, interruptible by new messages.
     '''
@@ -451,17 +443,17 @@ def display_temp_message(screen, message, duration, player_color, board):
     # Reset the interrupt flag and clear the message by redrawing
     interrupt_flag = False
     draw_board(screen)
-    draw_pieces(screen, player_color, board)
+    draw_pieces(screen, player, board)
     pygame.display.flip()
 
-def request_temp_message(screen, message, duration, player_color, board):
+def request_temp_message(screen, message, duration, player, board):
     '''
     Request a new temporary message, interrupting any current message.
     '''
     global interrupt_flag
     # Set the flag to immediately stop any current message
     interrupt_flag = False
-    display_temp_message(screen, message, duration, player_color, board)
+    display_temp_message(screen, message, duration, player, board)
 
 def clear_screen(screen):
     '''
