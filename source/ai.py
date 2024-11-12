@@ -66,6 +66,10 @@ def apply_move(board, move):
     start_pos, end_pos = move
     new_board = [row[:] for row in board]  # Create a deep copy of the board
     piece = new_board[start_pos[0]][start_pos[1]]
+    if piece == "wp" and end_pos[0] == 0:  # Promote white pawn
+        piece = "wq"
+    elif piece == "bp" and end_pos[0] == 7:  # Promote black pawn
+        piece = "bq"
     new_board[start_pos[0]][start_pos[1]] = ""
     new_board[end_pos[0]][end_pos[1]] = piece
     return new_board
@@ -93,7 +97,7 @@ def make_ai_move(board, screen):
     best_move = ai_move(board, depth=3)
     if best_move:
         start_pos, end_pos = best_move
-        return move_piece(screen, board, get_possible_moves(board, start_pos), start_pos, end_pos)
+        return move_piece(screen, board, get_possible_moves(board, start_pos), start_pos, end_pos, ai=True)
     return False
 
 def game_over(board):

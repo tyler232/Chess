@@ -39,6 +39,63 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE
 for piece in PIECES:
     PIECES[piece] = pygame.transform.scale(PIECES[piece], (SQUARE_SIZE, SQUARE_SIZE))
 
+def draw_mode_selection(screen):
+    '''
+    Draw the mode selection screen
+    '''
+    font = pygame.font.Font(None, int(SCREEN_HEIGHT * 0.05))
+    
+    # Draw the title
+    title_text = font.render("Select Game Mode", True, WHITE)
+    title_text_rect = title_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 4))
+    screen.blit(title_text, title_text_rect)
+
+    # Draw the buttons
+    button_width = int(SCREEN_WIDTH * 0.3)
+    button_height = int(SCREEN_HEIGHT * 0.1)
+    single_mode_button_x = (SCREEN_WIDTH - button_width) // 2
+    single_mode_button_y = SCREEN_HEIGHT // 2
+    multi_mode_button_x = single_mode_button_x
+    multi_mode_button_y = single_mode_button_y + button_height + int(SCREEN_HEIGHT * 0.1)
+    single_mode_button = pygame.Rect(single_mode_button_x, single_mode_button_y, button_width, button_height)
+    multi_mode_button = pygame.Rect(multi_mode_button_x, multi_mode_button_y, button_width, button_height)
+
+    pygame.draw.rect(screen, LIGHT_BROWN, single_mode_button)
+    pygame.draw.rect(screen, BROWN, multi_mode_button)
+
+    # Button text
+    button_font = pygame.font.Font(None, int(SCREEN_HEIGHT * 0.04))
+    single_text = button_font.render("Single Player", True, WHITE)
+    multi_text = button_font.render("Multiplayer", True, WHITE)
+
+    # Position text at the center of each button
+    single_text_rect = single_text.get_rect(center=single_mode_button.center)
+    multi_text_rect = multi_text.get_rect(center=multi_mode_button.center)
+
+    # Blit text onto the screen
+    screen.blit(single_text, single_text_rect)
+    screen.blit(multi_text, multi_text_rect)
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pos = pygame.mouse.get_pos()
+                if single_mode_button.collidepoint(pos):
+                    clear_screen(screen)
+                    return "single"
+                elif multi_mode_button.collidepoint(pos):
+                    clear_screen(screen)
+                    return "multi"
+        pygame.display.flip()
+
+    return None
+
+
+    
+
 def draw_top_bar(screen, opponent_name, score, sound_on):
     '''
     Draw the top bar with the opponent's name and score

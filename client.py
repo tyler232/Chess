@@ -27,7 +27,7 @@ color = None
 turn = None
 player_score = 0
 opponent_score = 0
-single_player = False
+single_player = True
 
 music_button = None
 sound_on = True
@@ -278,7 +278,7 @@ def single_player_mode():
                 print("AI moved")
             else:
                 print("AI could not move")
-                break
+                time.sleep(10000) # not sure what will happen here, lock the screen to figure it out
             continue
 
         for event in pygame.event.get():
@@ -335,7 +335,8 @@ def main():
     clear_screen(screen)
     PLAYER_ID = input_username(screen)
 
-    if single_player:
+    mode = draw_mode_selection(screen)
+    if mode == "single":
         single_player_mode()
         return
 
