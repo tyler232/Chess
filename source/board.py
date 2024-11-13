@@ -86,16 +86,67 @@ def draw_mode_selection(screen):
 
     return None
 
+def draw_difficulty_selection(screen):
+    '''
+    Draw the difficulty selection screen
+    '''
+    font = pygame.font.Font(None, int(SCREEN_HEIGHT * 0.05))
+    
+    title_text = font.render("Select Difficulty", True, Color.WHITE.value)
+    title_text_rect = title_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 10))
+    screen.blit(title_text, title_text_rect)
+
+    # Difficulty levels and their positions
+    difficulty_levels = [Difficulty.NOVICE, Difficulty.EASY, Difficulty.STANDARD, Difficulty.HARD, Difficulty.EXPERT]
+    text_color = [Color.BLACK, Color.GREEN, Color.BLUE, Color.ROYAL_PURPLE, Color.RED]
+    button_width = int(SCREEN_WIDTH * 0.3)
+    button_height = int(SCREEN_HEIGHT * 0.08)
+    button_x = (SCREEN_WIDTH - button_width) // 2
+    spacing = int(SCREEN_HEIGHT * 0.07)
+
+    # Draw each button
+    buttons = []
+    for i, level in enumerate(difficulty_levels):
+        button_y = (SCREEN_HEIGHT // 6) + i * (button_height + spacing)  # Move up the starting y-position
+        button = pygame.Rect(button_x, button_y, button_width, button_height)
+        pygame.draw.rect(screen, Color.LIGHT_BROWN.value if i % 2 != 0 else Color.BROWN.value, button)
+        
+        # Button text
+        button_font = pygame.font.Font(None, int(SCREEN_HEIGHT * 0.04))
+        level_text = button_font.render(level.value, True, text_color[i].value)
+        level_text_rect = level_text.get_rect(center=button.center)
+        
+        # Blit text onto the screen
+        screen.blit(level_text, level_text_rect)
+        
+        # Store button and level
+        buttons.append((button, level))
+
+    # Selection
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pos = pygame.mouse.get_pos()
+                for button, level in buttons:
+                    if button.collidepoint(pos):
+                        clear_screen(screen)
+                        return level
+        
+        pygame.display.flip()
+
 
     
 
-def draw_top_bar(screen, opponent_name, score, sound_on):
+def draw_top_bar(screen, opponent_name, score, sound_on, oppo_name_coloring=Color.WHITE.value):
     '''
     Draw the top bar with the opponent's name and score
     '''
     font_size = int(BAR_HEIGHT * 0.4)
     font = pygame.font.Font(None, font_size)
-    text = font.render(f"Opponent: {opponent_name}", True, Color.WHITE.value)
+    text = font.render(f"Opponent: {opponent_name}", True, oppo_name_coloring)
     screen.blit(text, (10, 10))
     score_text = font.render(f"Score: {score}", True, Color.WHITE.value)
     screen.blit(score_text, (10, 10 + font_size))

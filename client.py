@@ -195,6 +195,26 @@ def single_player_mode():
     Run Game in single player
     '''
     global turn, player_score, opponent_score, sound_on, screen
+    all_difficulty = [(0.4, 1), (0.15, 2), (0.03, 3), (0.01, 4), (0, 5)]
+    selected_difficulty = None
+    ai_name = None
+    level = draw_difficulty_selection(screen)
+    
+    if level == Difficulty.NOVICE:
+        selected_difficulty = all_difficulty[0]
+        ai_name = ("Novice", Color.WHITE.value)
+    elif level == Difficulty.EASY:
+        selected_difficulty = all_difficulty[1]
+        ai_name = ("Easy", Color.GREEN.value)
+    elif level == Difficulty.STANDARD:
+        selected_difficulty = all_difficulty[2]
+        ai_name = ("Standard", Color.BLUE.value)
+    elif level == Difficulty.HARD:
+        selected_difficulty = all_difficulty[3]
+        ai_name = ("Hard", Color.ROYAL_PURPLE.value)
+    elif level == Difficulty.EXPERT:
+        selected_difficulty = all_difficulty[4]
+        ai_name = ("Expert", Color.RED.value)
 
     player = Player.WHITE
 
@@ -214,7 +234,7 @@ def single_player_mode():
     turn = True
 
     while game_running:
-        music_button = draw_top_bar(screen, "AI", opponent_score, sound_on)
+        music_button = draw_top_bar(screen, ai_name[0], opponent_score, sound_on, ai_name[1])
         draw_board(screen)
         button_info = draw_bottom_bar(screen, PLAYER_ID, player_score)
         # check if the player is in check
@@ -272,7 +292,7 @@ def single_player_mode():
             # Get AI move
             print("AI making move")
             set_current_player(Player.BLACK)
-            ai_moved = make_ai_move(board, screen)
+            ai_moved = make_ai_move(board, screen, selected_difficulty[0], selected_difficulty[1])
             set_current_player(Player.WHITE)
             if ai_moved:
                 turn = True
@@ -320,9 +340,6 @@ def single_player_mode():
                         print("Not your turn")
                         request_temp_message(screen, "Not your turn", 1000, player, board)
         
-
-
-    
 
 def main():
     global screen

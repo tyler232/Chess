@@ -116,10 +116,15 @@ def ai_move(board, depth=3):
     return best_move
 
 # Example Usage
-def make_ai_move(board, screen):
-    best_move = ai_move(board, depth=3)
+def make_ai_move(board, screen, miss_rate=0.0, depth=3):
+    best_move = ai_move(board, depth)
     print("AI's best move:", best_move)
     if best_move:
+        # Introduce a miss rate to simulate human error
+        if random.random() < miss_rate:
+            print("AI missed the best move!")
+            possible_moves = generate_ai_moves(board)
+            best_move = random.choice(possible_moves)
         start_pos, end_pos = best_move
         return move_piece(screen, board, get_possible_moves(board, start_pos), start_pos, end_pos, ai=True)
     return False

@@ -10,8 +10,18 @@ class Color(Enum):
     RED = (255, 0, 0)
     YELLOW = (255, 255, 0)
     CYAN = (0, 255, 255)
+    BLUE = (0, 0, 255)
+    PURPLE = (255, 0, 255)
+    ROYAL_PURPLE = (142, 81, 169)
+    
 
 class Player(Enum):
     WHITE = "w"
     BLACK = "b"
 
+class Difficulty(Enum):
+    NOVICE = "Novice"
+    EASY = "Easy"
+    STANDARD = "Standard"
+    HARD = "Hard"
+    EXPERT = "Expert"
