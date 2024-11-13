@@ -12,7 +12,7 @@ from source.movement import *
 from source.board import *
 from dotenv import load_dotenv
 from source.ai import make_ai_move
-from source.types import *
+from source.constants import *
 
 SERVER_IP = "localhost"
 SERVER_PORT = 9060

@@ -1,6 +1,6 @@
 import pygame
 import time
-from source.types import *
+from source.constants import *
 
 SCREEN_WIDTH, SCREEN_HEIGHT = 900, 900
 BOARD_WIDTH, BOARD_HEIGHT = int(SCREEN_WIDTH * 0.84), int(SCREEN_HEIGHT * 0.84)

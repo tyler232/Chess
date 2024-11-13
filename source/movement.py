@@ -1,6 +1,6 @@
 import copy
 from source.board import promotion_selection, display_temp_message
-from source.types import *
+from source.constants import *
 
 current_player: Player = Player.WHITE
 last_move = None
