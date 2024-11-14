@@ -43,4 +43,14 @@ Position* possible_moves_rook(char board[BOARD_SIZE][BOARD_SIZE][3], Position st
 */
 Position* possible_moves_bishop(char board[BOARD_SIZE][BOARD_SIZE][3], Position start_pos, char color, int* move_count);
 
+/**
+ * Get all possible moves for a king
+ * @param board The current board
+ * @param selected_piece The starting position of the king
+ * @param color The color of the king
+ * @param move_count The number of possible moves
+ * @return An array of possible moves
+*/
+Position *possible_moves_king(char board[BOARD_SIZE][BOARD_SIZE][3], Position selected_piece, char color, int *move_count);
+
 #endif
