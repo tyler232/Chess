@@ -3,6 +3,8 @@ from source.constants import *
 import random
 
 transposition_cache = {}
+maxing_cache = {}
+mining_cache = {}
 
 def evaluate_board(board):
     piece_values = {
@@ -35,6 +37,8 @@ def minimax(board, depth, alpha, beta, is_maximizing_player):
         return evaluation
 
     if is_maximizing_player:  # AI's turn (maximize score)
+        if board_hash in maxing_cache:
+            return maxing_cache[board_hash]
         max_eval = float('-inf')
         for move in generate_ai_moves(board):
             new_board = apply_move(board, move)
@@ -43,8 +47,11 @@ def minimax(board, depth, alpha, beta, is_maximizing_player):
             alpha = max(alpha, eval)
             if beta <= alpha:
                 break
+        maxing_cache[board_hash] = max_eval
         return max_eval
     else:  # Opponent's turn (minimize score)
+        if board_hash in mining_cache:
+            return mining_cache[board_hash]
         min_eval = float('inf')
         for move in generate_enemy_moves(board):
             new_board = apply_move(board, move)
@@ -53,10 +60,12 @@ def minimax(board, depth, alpha, beta, is_maximizing_player):
             beta = min(beta, eval)
             if beta <= alpha:
                 break
+        mining_cache[board_hash] = min_eval
         return min_eval
 
 def generate_ai_moves(board):
     moves = []
+    priorities = []
     for r in range(8):
         for c in range(8):
             if board[r][c] != "" and board[r][c][0] == "b":
@@ -66,11 +75,19 @@ def generate_ai_moves(board):
                     new_board = apply_move(board, ((r, c), move))
                     king_loc = find_king(new_board)
                     if not in_check(new_board, king_loc):
+                        priorities.append(evaluate_board(new_board))
                         moves.append(((r, c), move))
-    return moves
+    # Create a list of tuples (move, priority) and sort by priority
+    moves_with_priority = list(zip(moves, priorities))
+    moves_with_priority.sort(key=lambda x: x[1], reverse=True)  # Sort by priority
+
+    # Return the sorted moves based on highest priority
+    sorted_moves = [move for move, priority in moves_with_priority]
+    return sorted_moves
 
 def generate_enemy_moves(board):
     moves = []
+    priorities = []
     for r in range(8):
         for c in range(8):
             if board[r][c] != "" and board[r][c][0] == "w":
@@ -81,8 +98,15 @@ def generate_enemy_moves(board):
                     new_board = apply_move(board, ((r, c), move))
                     enemy_king_loc = find_enemy_king(new_board)
                     if not enemy_in_check(new_board, enemy_king_loc):
+                        priorities.append(evaluate_board(new_board))
                         moves.append(((r, c), move))
-    return moves
+    # Create a list of tuples (move, priority) and sort by priority
+    moves_with_priority = list(zip(moves, priorities))
+    moves_with_priority.sort(key=lambda x: x[1], reverse=True)  # Sort by priority
+
+    # Return the sorted moves based on highest priority
+    sorted_moves = [move for move, priority in moves_with_priority]
+    return sorted_moves
 
 
 def apply_move(board, move):

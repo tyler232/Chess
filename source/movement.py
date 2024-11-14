@@ -110,7 +110,7 @@ def move_piece(screen, board, possible_moves, selected_piece, end_pos, ai=False)
         copy_board[end_row][end_col] = piece
         checking = in_check(copy_board, find_king(copy_board))
         if not checking:
-            new_piece = "w" + promotion_selection("WHITE") if not ai else "wq"
+            new_piece = "w" + promotion_selection(screen, Player.WHITE) if not ai else "wq"
             board[start_row][start_col] = ""
             board[end_row][end_col] = new_piece
             last_move = (piece, selected_piece, end_pos)
@@ -124,7 +124,7 @@ def move_piece(screen, board, possible_moves, selected_piece, end_pos, ai=False)
         copy_board[end_row][end_col] = piece
         checking = in_check(copy_board, find_king(copy_board))
         if not checking:
-            new_piece = "b" + promotion_selection("BLACK") if not ai else "bq"
+            new_piece = "b" + promotion_selection(screen, Player.BLACK) if not ai else "bq"
             board[start_row][start_col] = ""
             board[end_row][end_col] = new_piece
             last_move = (piece, selected_piece, end_pos)
