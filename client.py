@@ -1,6 +1,7 @@
 import pygame
 import sys
 import os
+import subprocess
 import socket
 import errno
 import time
@@ -8,9 +9,10 @@ import random
 import string
 import pickle
 import threading
+import psutil
+import signal
 from source.movement import *
 from source.board import *
-from dotenv import load_dotenv
 from source.ai import make_ai_move
 from source.constants import *
 
@@ -19,6 +21,7 @@ SERVER_PORT = 9060
 SERVER_ADDRESS = (SERVER_IP, SERVER_PORT)
 PLAYER_ID = None
 
+server_process = None
 selected_piece = None
 client_running = True
 game_running = False
@@ -59,23 +62,6 @@ def read_until_nl(sock):
 
     print(f"{recv_bit} bits received")
     return buffer
-
-def get_server_info():
-    '''
-    get the server IP and port from the user, also set up user id
-    '''
-    global SERVER_IP, SERVER_PORT, SERVER_ADDRESS
-    load_dotenv()
-
-    SERVER_IP = os.getenv("SERVER_IP")
-    SERVER_PORT = os.getenv("SERVER_PORT")
-    if not SERVER_IP or not SERVER_PORT:
-        print("Enviroment variables not set, please set up configuration")
-        exit(1)
-    else:
-        SERVER_ADDRESS = (SERVER_IP, int(SERVER_PORT))
-
-    print(f"Connecting to server at {SERVER_IP}:{SERVER_PORT}...")
 
 def send_restart_request(sock):
     '''
@@ -176,6 +162,9 @@ def input_username(screen):
         # Handle user input events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                client_running = False
+                if server_process:
+                    server_process.terminate()
                 pygame.quit()
                 sys.exit()
             elif event.type == pygame.KEYDOWN:
@@ -189,6 +178,51 @@ def input_username(screen):
 
     clear_screen(screen)  # Clear screen after input is complete
     return user_id
+
+def input_server_ip(screen):
+    '''
+    Get the server IP from the user.
+    @param screen: The screen to display the input box on
+    @return: The server IP
+    '''
+    global SCREEN_WIDTH, SCREEN_HEIGHT
+    input_box = pygame.Rect(SCREEN_WIDTH // 4, SCREEN_HEIGHT // 3, SCREEN_WIDTH // 2, 50)
+    server_ip = ""
+    font = pygame.font.Font(None, int(SCREEN_HEIGHT * 0.03))
+    active = True
+
+    while active:
+        # Clear the screen and redraw everything
+        screen.fill((0, 0, 0))  # Clear screen to black
+        text_surface = font.render("Enter the server IP:", True, Color.WHITE.value)
+        screen.blit(text_surface, (SCREEN_WIDTH // 4, SCREEN_HEIGHT // 4))  # Display prompt text
+        pygame.draw.rect(screen, Color.WHITE.value, input_box, 2)  # Draw the input box
+
+        # Render the typed server IP text inside the box
+        server_text = font.render(server_ip, True, Color.WHITE.value)
+        screen.blit(server_text, (input_box.x + 5, input_box.y + 5))  # Display entered text
+
+        pygame.display.flip()  # Update the screen with new drawings
+
+        # Handle user input events
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                client_running = False
+                if server_process:
+                    server_process.terminate()
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    active = False  # Exit loop when Enter is pressed
+                elif event.key == pygame.K_BACKSPACE:
+                    server_ip = server_ip[:-1]  # Remove the last character when backspace is pressed
+                else:
+                    if len(server_ip) < 20:  # Limit the IP length to 20 characters
+                        server_ip += event.unicode  # Add typed character to server IP
+
+    clear_screen(screen)  # Clear screen after input is complete
+    return server_ip
 
 def single_player_mode():
     '''
@@ -293,15 +327,18 @@ def single_player_mode():
             print("AI making move")
             set_current_player(Player.BLACK)
             ai_moved = make_ai_move(board, screen, selected_difficulty[0], selected_difficulty[1])
-            set_current_player(Player.WHITE)
             if ai_moved:
                 turn = True
+                set_current_player(Player.WHITE)
                 print("AI moved")
             else:
                 print("AI could not move")
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                client_running = False
+                if server_process:
+                    server_process.terminate()
                 pygame.quit()
                 sys.exit()
             elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -339,7 +376,21 @@ def single_player_mode():
                     elif not turn and piece and ((piece[0] == "w" and player == Player.WHITE) or (piece[0] == "b" and player == Player.BLACK)):
                         print("Not your turn")
                         request_temp_message(screen, "Not your turn", 1000, player, board)
-        
+
+def detect_ip():
+    '''
+    Detect the IP address of the client to start server
+    '''
+    interfaces = psutil.net_if_addrs()
+    ip_addrs = []
+    for interface, addrs in interfaces.items():
+        for addr in addrs:
+            if addr.family == socket.AF_INET:
+                # Skip loopback and broadcast addresses
+                if addr.address.endswith(".1") or addr.address.endswith(".255"):
+                    continue
+                ip_addrs.append(addr.address)
+    return ip_addrs
 
 def main():
     global screen
@@ -347,7 +398,9 @@ def main():
     global selected_piece, possible_moves, color, turn
     global player_score, opponent_score
     global music_button, sound_on
+    global server_process
     global PLAYER_ID
+    global SERVER_IP, SERVER_PORT, SERVER_ADDRESS
 
     player = None
 
@@ -358,13 +411,29 @@ def main():
     if mode == "single":
         single_player_mode()
         return
+    
+    if (draw_start_or_join_server(screen) == "Start Server"):
+        SERVER_IP = draw_server_selection(screen, detect_ip())
+        server_process = subprocess.Popen(["./server", SERVER_IP, str(SERVER_PORT)])
+        print(f"Server started with PID: {server_process.pid}")
 
-    # get the server IP and port from the user
-    display_message(screen, "Connecting to server...")
-    get_server_info()
+        SERVER_ADDRESS = (SERVER_IP, SERVER_PORT)
+        display_message(screen, "Connecting to server...")
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect(SERVER_ADDRESS)
 
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect(SERVER_ADDRESS)
+    else:
+        while True:
+            SERVER_IP = input_server_ip(screen)
+            SERVER_ADDRESS = (SERVER_IP, SERVER_PORT)
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.connect(SERVER_ADDRESS)
+                display_message(screen, f"Connected to server {SERVER_IP}")
+                break
+            except (socket.gaierror, socket.error) as e:
+                display_message(screen, f"Please reenter a valid server IP.")
+                # Loop continues, prompting the user again
 
     # Send the player ID to the server
     id_header = str(PLAYER_ID + "\n")
@@ -375,7 +444,7 @@ def main():
     print("Connection status:", connection_status)
     if connection_status == "WAIT":
         clear_screen(screen)
-        display_message(screen, "Waiting for opponent...")
+        display_message_with_serverip(screen, "Waiting for opponent...", SERVER_IP)
     elif connection_status == "FULL":
         clear_screen(screen)
         display_message(screen, "Game is full")
@@ -501,6 +570,9 @@ def main():
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
+                    client_running = False
+                    if server_process:
+                        server_process.terminate()
                     pygame.quit()
                     sys.exit()
                 elif event.type == pygame.VIDEORESIZE:
@@ -659,5 +731,21 @@ def main():
         # wait 5 seconds until start next game
         time.sleep(5)
 
+def handle_sigint(sig, frame):
+    '''
+    Handle SIGINT signal
+    @param sig: signal number
+    @param frame: current stack frame
+    '''
+    global client_running, server_process
+    print("Received SIGINT signal. Exiting...")
+    client_running = False
+    if server_process:
+        server_process.terminate()
+    pygame.quit()
+    sys.exit(0)
+
+
 if __name__ == "__main__":
+    signal.signal(signal.SIGINT, handle_sigint)
     main()

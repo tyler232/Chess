@@ -351,9 +351,6 @@ def promotion_selection(screen, player):
     # Wait for user selection
     while selected_piece is None:
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
                 # Check if the click is within the selection box
@@ -459,6 +456,18 @@ def display_message(screen, message):
     pygame.display.flip()
     pygame.time.wait(2000)
 
+def display_message_with_serverip(screen, message, server_ip):
+    font = pygame.font.Font(None, 74)
+    text = font.render(message, True, (255, 0, 0))
+    server_text = font.render("SERVER IP: " + server_ip, True, (255, 0, 0))
+    text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
+    screen.blit(text, text_rect)
+    server_text_rect = server_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + (SCREEN_HEIGHT * 0.15)))
+    screen.blit(server_text, server_text_rect)
+    pygame.display.flip()
+
+
+
 def display_temp_message(screen, message, duration, player, board):
     '''
     Display a temporary message centered on the board, interruptible by new messages.
@@ -496,6 +505,100 @@ def display_temp_message(screen, message, duration, player, board):
     draw_board(screen)
     draw_pieces(screen, player, board)
     pygame.display.flip()
+
+def draw_start_or_join_server(screen):
+    font = pygame.font.Font(None, int(SCREEN_HEIGHT * 0.05))
+
+    # Draw the title
+    title_text = font.render("Start or Join Server", True, Color.WHITE.value)
+
+    title_text_rect = title_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 4))
+    screen.blit(title_text, title_text_rect)
+
+    # Draw the buttons
+    button_width = int(SCREEN_WIDTH * 0.3)
+    button_height = int(SCREEN_HEIGHT * 0.1)
+    button_x = (SCREEN_WIDTH - button_width) // 2
+    spacing = int(SCREEN_HEIGHT * 0.07)
+    button_texts = ["Start Server", "Join Server"]
+    for i, button_text in enumerate(button_texts):
+        button_y = SCREEN_HEIGHT // 2 + i * (button_height + spacing)
+        button = pygame.Rect(button_x, button_y, button_width, button_height)
+        pygame.draw.rect(screen, Color.LIGHT_BROWN.value if i % 2 != 0 else Color.BROWN.value, button)
+        
+        # Button text
+        button_font = pygame.font.Font(None, int(SCREEN_HEIGHT * 0.04))
+        text = button_font.render(button_text, True, Color.WHITE.value)
+        text_rect = text.get_rect(center=button.center)
+        
+        # Blit text onto the screen
+        screen.blit(text, text_rect)
+    
+    # Selection
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pos = pygame.mouse.get_pos()
+                for i, button_text in enumerate(button_texts):
+                    button_y = SCREEN_HEIGHT // 2 + i * (button_height + spacing)
+                    button = pygame.Rect(button_x, button_y, button_width, button_height)
+                    if button.collidepoint(pos):
+                        clear_screen(screen)
+                        return button_text
+                
+        pygame.display.flip()
+
+def draw_server_selection(screen, servers :list):
+    '''
+    Draw the server selection screen
+    '''
+    font = pygame.font.Font(None, int(SCREEN_HEIGHT * 0.05))
+    
+    # Draw the title
+    title_text = font.render("Select Server", True, Color.WHITE.value)
+    title_text_rect = title_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 4))
+    screen.blit(title_text, title_text_rect)
+
+    # Draw the buttons
+    button_width = int(SCREEN_WIDTH * 0.3)
+    button_height = int(SCREEN_HEIGHT * 0.1)
+    button_x = (SCREEN_WIDTH - button_width) // 2
+    spacing = int(SCREEN_HEIGHT * 0.07)
+    for i, server in enumerate(servers):
+        button_y = SCREEN_HEIGHT // 2 + i * (button_height + spacing)
+        server_button = pygame.Rect(button_x, button_y, button_width, button_height)
+        pygame.draw.rect(screen, Color.LIGHT_BROWN.value if i % 2 != 0 else Color.BROWN.value, server_button)
+        
+        # Button text
+        button_font = pygame.font.Font(None, int(SCREEN_HEIGHT * 0.04))
+        server_text = button_font.render(server, True, Color.WHITE.value)
+        server_text_rect = server_text.get_rect(center=server_button.center)
+        
+        # Blit text onto the screen
+        screen.blit(server_text, server_text_rect)
+    
+    # Selection
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pos = pygame.mouse.get_pos()
+                for i, server in enumerate(servers):
+                    button_y = SCREEN_HEIGHT // 2 + i * (button_height + spacing)
+                    server_button = pygame.Rect(button_x, button_y, button_width, button_height)
+                    if server_button.collidepoint(pos):
+                        clear_screen(screen)
+                        return server
+                
+        pygame.display.flip()
+
+    return None
+    
 
 def request_temp_message(screen, message, duration, player, board):
     '''

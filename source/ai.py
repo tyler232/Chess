@@ -1,10 +1,10 @@
 from source.movement import *
 from source.constants import *
+from source.board import *
 import random
 
-transposition_cache = {}
-maxing_cache = {}
-mining_cache = {}
+board_score_cache = {}
+board_move_cache = {}
 
 def evaluate_board(board):
     piece_values = {
@@ -26,19 +26,17 @@ def evaluate_board(board):
     return score
 
 def minimax(board, depth, alpha, beta, is_maximizing_player):
-    # Base case: evaluate if we've reached the desired depth or game-over condition
-    board_hash = hash(str(board))  # Create a unique hash of the board position
-    if board_hash in transposition_cache:
-        return transposition_cache[board_hash]
-
+    board_hash = hash(str(board))
     if depth == 0 or game_over(board):
-        evaluation = evaluate_board(board)
-        transposition_cache[board_hash] = evaluation
-        return evaluation
+        # cache hit
+        if board_hash in board_score_cache:
+            return board_score_cache[board_hash]
+        else:
+            evaluation = evaluate_board(board)
+            board_score_cache[board_hash] = evaluation
+            return evaluation
 
     if is_maximizing_player:  # AI's turn (maximize score)
-        if board_hash in maxing_cache:
-            return maxing_cache[board_hash]
         max_eval = float('-inf')
         for move in generate_ai_moves(board):
             new_board = apply_move(board, move)
@@ -47,11 +45,8 @@ def minimax(board, depth, alpha, beta, is_maximizing_player):
             alpha = max(alpha, eval)
             if beta <= alpha:
                 break
-        maxing_cache[board_hash] = max_eval
         return max_eval
     else:  # Opponent's turn (minimize score)
-        if board_hash in mining_cache:
-            return mining_cache[board_hash]
         min_eval = float('inf')
         for move in generate_enemy_moves(board):
             new_board = apply_move(board, move)
@@ -60,10 +55,13 @@ def minimax(board, depth, alpha, beta, is_maximizing_player):
             beta = min(beta, eval)
             if beta <= alpha:
                 break
-        mining_cache[board_hash] = min_eval
         return min_eval
 
 def generate_ai_moves(board):
+    board_hash = hash(str(board))
+    if board_hash in board_move_cache:
+        return board_move_cache[board_hash]
+    
     moves = []
     priorities = []
     for r in range(8):
@@ -83,9 +81,15 @@ def generate_ai_moves(board):
 
     # Return the sorted moves based on highest priority
     sorted_moves = [move for move, priority in moves_with_priority]
+
+    board_move_cache[board_hash] = sorted_moves
     return sorted_moves
 
 def generate_enemy_moves(board):
+    board_hash = hash(str(board))
+    if board_hash in board_move_cache:
+        return board_move_cache[board_hash]
+    
     moves = []
     priorities = []
     for r in range(8):
@@ -106,6 +110,8 @@ def generate_enemy_moves(board):
 
     # Return the sorted moves based on highest priority
     sorted_moves = [move for move, priority in moves_with_priority]
+
+    board_move_cache[board_hash] = sorted_moves
     return sorted_moves
 
 
@@ -152,6 +158,7 @@ def make_ai_move(board, screen, miss_rate=0.0, depth=3):
         start_pos, end_pos = best_move
         return move_piece(screen, board, get_possible_moves(board, start_pos), start_pos, end_pos, ai=True)
     return False
+    
 
 def game_over(board):
     king_loc = find_king(board)
@@ -162,3 +169,4 @@ def game_over(board):
     if enemy_in_checkmate(board, enemy_king_loc) or enemy_in_stalemate(board, enemy_king_loc):
         return True
     return False
+

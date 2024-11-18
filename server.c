@@ -8,7 +8,6 @@
 #include <errno.h>
 #include <signal.h>
 
-#include "loadenv.h"
 
 #define MAX_CLIENTS 2
 #define BUFFER_SIZE 4096
@@ -257,16 +256,9 @@ void *handle_client(void *arg) {
     return NULL;
 }
 
-int main() {
-    // Load environment variables from .env file
-    load_env(".env");
-
-    const char *server_ip = getenv("SERVER_IP");
-    const char *server_port_str = getenv("SERVER_PORT");
-    if (server_ip == NULL || server_port_str == NULL) {
-        printf("Environment variables not set, please set up configuration\n");
-        exit(EXIT_FAILURE);
-    }
+int main(int argc, char *argv[]) {
+    const char *server_ip = argv[1];
+    const char *server_port_str = argv[2];
 
     const int server_port = atoi(server_port_str);
 
